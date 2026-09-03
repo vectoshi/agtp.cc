@@ -1,0 +1,5 @@
+# robots.txt for agtp.cc
+User-agent: *
+Allow: /
+
+Sitemap: https://agtp.cc/sitemap.xml

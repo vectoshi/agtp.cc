@@ -1,0 +1,317 @@
+<section id="core-objects">
+<h2>Core Objects</h2>
+<p>This section specifies each AGTP object property by property. Tables list the properties of the object's <code>credentialSubject</code> (or of the record itself, for receipts and observations); credential-level properties follow the rules of <a href="#credential-family">section 4.2</a>. The machine-readable schemas are in <a href="#schemas">Appendix B</a>.</p>
+
+<section id="agent-did-document">
+<h3>Agents and DID Documents</h3>
+<p>An agent has no AGTP object of its own; its DID Document is its description. AGTP adds requirements on the services and verification relationships that document carries.</p>
+<div class="table-wrap">
+<table class="props">
+<caption>DID Document requirements for AGTP agents and Spaces</caption>
+<thead><tr><th>Property</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>assertionMethod</code></td><td>MUST</td><td>At least one verification method whose type and key are usable with a supported cryptosuite (<a href="#proofs">§10.1</a>). Signals and manifests are verified against this relationship.</td></tr>
+<tr><td><code>service</code> of type <code>AGTPFeedbackService</code></td><td>MUST for agents; SHOULD for Spaces</td><td><code>serviceEndpoint</code> is an HTTPS URL, or an object with a <code>uri</code>, implementing the feedback resource of <a href="#http-feedback">§9.1</a>. Exactly one such service SHOULD be present.</td></tr>
+<tr><td><code>service</code> of type <code>AGTPSpaceManifest</code></td><td>MUST for Spaces</td><td><code>serviceEndpoint</code> serves the current Space Manifest (<a href="#http-space">§9.4</a>).</td></tr>
+<tr><td><code>service</code> of type <code>AGTPCapabilities</code></td><td>SHOULD</td><td><code>serviceEndpoint</code> serves the capabilities document of <a href="#http-capabilities">§9.6</a>.</td></tr>
+<tr><td><code>service</code> of type <code>AGTPSignalIndex</code></td><td>MAY</td><td><code>serviceEndpoint</code> serves the signal index of <a href="#http-signal-index">§9.7</a>.</td></tr>
+<tr><td><code>service</code> of type <code>AgenticResourceDiscovery</code></td><td>SHOULD, when the agent publishes ARD entries</td><td><code>serviceEndpoint</code> is the URL of the agent's ARD manifest, normally <code>https://&lt;domain&gt;/.well-known/ard.json</code>.</td></tr>
+<tr><td><code>service</code> of other types</td><td>MAY</td><td>Binding profiles register additional service types (<code>MCPServer</code>, <code>A2AAgentCard</code>) that let a DID Document point at an agent's runtime interfaces. Their semantics are those of the referenced protocol.</td></tr>
+<tr><td><code>alsoKnownAs</code></td><td>SHOULD, when domain-bound</td><td>The HTTPS origin(s) at which the agent publishes ARD entries or runtime endpoints, enabling the mutual binding of <a href="#discovery-verifying">§7.2</a>.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="example" data-title="A DID Document advertising AGTP and runtime services">
+<pre><code>{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/multikey/v1"
+  ],
+  "id": "did:web:solver.example",
+  "alsoKnownAs": ["https://solver.example/"],
+  "verificationMethod": [{
+    "id": "did:web:solver.example#key-1",
+    "type": "Multikey",
+    "controller": "did:web:solver.example",
+    "publicKeyMultibase": "z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH"
+  }],
+  "assertionMethod": ["did:web:solver.example#key-1"],
+  "authentication": ["did:web:solver.example#key-1"],
+  "service": [
+    { "id": "did:web:solver.example#agtp-feedback",
+      "type": "AGTPFeedbackService",
+      "serviceEndpoint": "https://solver.example/.well-known/agtp/feedback" },
+    { "id": "did:web:solver.example#agtp-capabilities",
+      "type": "AGTPCapabilities",
+      "serviceEndpoint": "https://solver.example/.well-known/agtp/capabilities" },
+    { "id": "did:web:solver.example#ard",
+      "type": "AgenticResourceDiscovery",
+      "serviceEndpoint": "https://solver.example/.well-known/ard.json" },
+    { "id": "did:web:solver.example#mcp",
+      "type": "MCPServer",
+      "serviceEndpoint": "https://mcp.solver.example/" },
+    { "id": "did:web:solver.example#a2a",
+      "type": "A2AAgentCard",
+      "serviceEndpoint": "https://solver.example/.well-known/agent-card.json" }
+  ]
+}</code></pre>
+</div>
+<p>A feedback service MUST authenticate callers and MAY apply admission controls and rate limits; the mechanism is a policy matter, but the HTTP profile's nonce and idempotency requirements (<a href="#http-nonce">section 9.2</a>) apply regardless. The requirement to advertise a feedback service is the protocol's anti-leeching primitive: an agent that participates in a Space can always be evaluated.</p>
+</section>
+
+<section id="space-manifest">
+<h3>Space Manifest</h3>
+<p>A Space Manifest is a credential of type <code>SpaceManifest</code> issued by the Space's DID. It is the only place where interpretation rules live; a signal is meaningless until it is read against the manifest of the Space it names.</p>
+<div class="table-wrap">
+<table class="props">
+<caption>Space Manifest <code>credentialSubject</code> properties</caption>
+<thead><tr><th>Property</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td>MUST</td><td>The Space's DID; equal to the credential's <code>issuer</code>.</td></tr>
+<tr><td><code>version</code></td><td>MUST</td><td>A semantic version string (<code>MAJOR.MINOR.PATCH</code>) of the manifest.</td></tr>
+<tr><td><code>manifestHash</code></td><td>MUST</td><td>The multibase multihash of the canonicalised manifest without its <code>proof</code> and without this property, computed as in <a href="#hashing">§10.2</a>. Lets clients pin a manifest independently of its serialisation.</td></tr>
+<tr><td><code>dimensions</code></td><td>MUST</td><td>A non-empty array of objects, each with <code>id</code> (a dimension identifier, <a href="#dimension-identifiers">§3.4</a>), <code>range</code> (a two-element numeric array, inclusive), <code>higherIsBetter</code> (boolean) and optionally <code>unit</code> (string) and <code>ref</code> (URI).</td></tr>
+<tr><td><code>dimensionRefs</code></td><td>MAY</td><td>An array of URIs giving external definitions of dimensions; SHOULD dereference to OKF concepts (<a href="#knowledge-dimensions">§8.4</a>).</td></tr>
+<tr><td><code>aggregation</code></td><td>SHOULD</td><td>An object with <code>name</code> (a URI or registered identifier of an aggregation function, <a href="#aggregation">§11</a>), <code>parameters</code> (an object) and optionally <code>impl</code> (a URI of a reference implementation). When absent, the reference default applies.</td></tr>
+<tr><td><code>persistence_policy</code></td><td>SHOULD</td><td>An object with <code>ephemeralRetention</code> (an ISO 8601 duration ceiling for ephemeral signals) and <code>persistentPublication</code> (<code>public-index</code>, <code>space-index</code> or <code>none</code>), plus policy-specific keys.</td></tr>
+<tr><td><code>status</code></td><td>SHOULD</td><td>URL of the Space's status resource for signals that use a Space status API instead of a status list (<a href="#status">§10.3</a>).</td></tr>
+<tr><td><code>revocation</code></td><td>SHOULD</td><td>URL of the Space's revocation resource.</td></tr>
+<tr><td><code>capabilities</code></td><td>MAY</td><td>An object mirroring the capabilities document of <a href="#http-capabilities">§9.6</a>: supported AGTP versions, profiles and cryptosuites.</td></tr>
+<tr><td><code>knowledge</code></td><td>MAY</td><td>An array of knowledge bundle references, each with <code>resource</code> (URL of an OKF bundle root), <code>cid</code> (CID of the bundle tree), <code>okf_version</code> and optionally <code>role</code> (<code>dimensions</code>, <code>policy</code>, <code>documentation</code>, <code>corpus</code>). See <a href="#knowledge">§8</a>.</td></tr>
+<tr><td><code>discovery</code></td><td>MAY</td><td>An object with <code>ard</code> (the ARD identifier of the Space's entry) and <code>registries</code> (an array of ARD registry base URLs the Space recognises). See <a href="#discovery">§7</a>.</td></tr>
+<tr><td><code>admission</code></td><td>MAY</td><td>An opaque object describing who may issue signals in the Space and under what conditions. AGTP defines no semantics; consumers treat it as policy.</td></tr>
+</tbody>
+</table>
+</div>
+<p>At the credential level, <code>validFrom</code> and <code>validUntil</code> MUST be present and define the period during which the manifest governs the Space. A manifest MUST NOT be applied outside that period except as last-known-good during a partition (<a href="#aggregation-partition">section 11.3</a>). When a Space publishes a new manifest, it SHOULD overlap the validity periods so that clients can migrate, and it MUST increment <code>version</code>.</p>
+<p>Manifests are served under the HTTP profile with cache validators (<a href="#http-space">section 9.4</a>). Clients MUST cache manifests by <code>manifestHash</code> and SHOULD pin the hash they used when publishing a persistent signal, so that the signal can later be re-interpreted under the exact rules that applied.</p>
+<div class="example" data-title="A Space Manifest with knowledge and discovery pointers">
+<pre><code>{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://schema.agtp.org/context/v2"
+  ],
+  "id": "https://rlvr.example/.well-known/agtp/space/did:web:rlvr.example",
+  "type": ["VerifiableCredential", "SpaceManifest"],
+  "issuer": "did:web:rlvr.example",
+  "validFrom": "2026-09-01T00:00:00Z",
+  "validUntil": "2027-03-01T00:00:00Z",
+  "credentialSubject": {
+    "id": "did:web:rlvr.example",
+    "version": "2.1.0",
+    "manifestHash": "uEiCz7m5gq4Vh2kQ2Jm7Y1Q2m3k6nJ1c2f4b7dq6l5o8q9pA",
+    "dimensions": [
+      { "id": "accuracy",   "range": [0, 1], "higherIsBetter": true, "unit": "prob",
+        "ref": "https://rlvr.example/knowledge/dimensions/accuracy.md" },
+      { "id": "robustness", "range": [0, 1], "higherIsBetter": true },
+      { "id": "latency",    "range": [0, 60], "higherIsBetter": false, "unit": "s" }
+    ],
+    "aggregation": {
+      "name": "https://schema.agtp.org/aggregation#TrustWeightedAverage",
+      "parameters": { "window": "P30D", "defaultWeight": 1.0,
+                      "minRaters": 3, "maxWeightPerIssuer": 0.4 }
+    },
+    "persistence_policy": { "ephemeralRetention": "P7D",
+                            "persistentPublication": "public-index" },
+    "status": "https://rlvr.example/.well-known/agtp/status",
+    "revocation": "https://rlvr.example/.well-known/agtp/revocations",
+    "knowledge": [
+      { "role": "dimensions", "resource": "https://rlvr.example/knowledge/",
+        "cid": "bafybeib2xq3zj7q6m5k2t4y7v3w6x5z4a3b2c1d0e9f8g7h6i5j4k3l2m",
+        "okf_version": "0.2" }
+    ],
+    "discovery": {
+      "ard": "urn:air:rlvr.example:space:rlvr",
+      "registries": ["https://registry.example/api/v1/"]
+    },
+    "capabilities": {
+      "agtpVersion": "2.1.0",
+      "supportedProfiles": ["http/1.0", "ard/0.91", "okf/0.2", "mcp/2025-11-25"],
+      "cryptosuites": ["eddsa-rdfc-2022"]
+    }
+  },
+  "credentialStatus": {
+    "id": "https://rlvr.example/status/manifests#12",
+    "type": "BitstringStatusListEntry",
+    "statusPurpose": "revocation",
+    "statusListIndex": "12",
+    "statusListCredential": "https://rlvr.example/status/manifests"
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-rdfc-2022",
+    "created": "2026-09-01T00:00:00Z",
+    "verificationMethod": "did:web:rlvr.example#key-1",
+    "proofPurpose": "assertionMethod",
+    "proofValue": "z5b1Xx…"
+  }
+}</code></pre>
+</div>
+</section>
+
+<section id="learning-signal">
+<h3>Learning Signal</h3>
+<p>A Learning Signal is a credential of type <code>LearningSignal</code> issued by an evaluator's DID. Its <code>credentialSubject</code> carries the claims below.</p>
+<div class="table-wrap">
+<table class="props">
+<caption>Learning Signal <code>credentialSubject</code> properties</caption>
+<thead><tr><th>Property</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>subject</code></td><td>MUST</td><td>The DID or URI of the entity evaluated: an agent, a capability, an artifact (as a CID URI or dereferenceable URL), an interaction or a knowledge concept.</td></tr>
+<tr><td><code>id</code></td><td>SHOULD</td><td>Equal to <code>subject</code>, so that generic Verifiable Credential tooling identifies the subject without AGTP knowledge.</td></tr>
+<tr><td><code>space</code></td><td>MUST</td><td>The DID of the Space in which the signal applies. MUST equal the <code>space</code> parameter of <code>provenance</code>.</td></tr>
+<tr><td><code>dimensions</code></td><td>MUST</td><td>A non-empty array of dimension identifiers, each declared by the Space's manifest that was valid at <code>validFrom</code>.</td></tr>
+<tr><td><code>value</code></td><td>MUST</td><td>A number when <code>dimensions</code> has one element, otherwise an array of numbers of the same length, in the same order. Each value MUST lie within the declared range of its dimension.</td></tr>
+<tr><td><code>persistence</code></td><td>MUST</td><td><code>ephemeral</code> or <code>persistent</code>.</td></tr>
+<tr><td><code>provenance</code></td><td>MUST</td><td>A provenance URI conforming to <a href="#provenance-uri">§3.5</a>.</td></tr>
+<tr><td><code>issuerRelation</code></td><td>SHOULD</td><td><code>self</code>, <code>affiliate</code> or <code>independent</code>, describing the issuer's relationship to the subject.</td></tr>
+<tr><td><code>commitment</code></td><td>MAY; MUST when the signal is a distillation</td><td>A multibase multihash of a Merkle root over the ephemeral signals or observations summarised, computed with the tree construction of <a href="#anchor-commitment">§5.6</a>.</td></tr>
+<tr><td><code>confidence</code></td><td>MAY</td><td>A number in [0, 1] expressing the issuer's confidence in <code>value</code>. Aggregators MAY weight by it.</td></tr>
+<tr><td><code>comment</code></td><td>MAY</td><td>A short human-readable string. Producers SHOULD keep it under 1024 characters and MUST NOT place personal data in it that the Space's persistence policy would forbid.</td></tr>
+<tr><td><code>observedAt</code></td><td>MAY</td><td>An <cite>[<a href="#bib-rfc3339">RFC3339</a>]</cite> timestamp of the evaluated interaction, when it differs materially from <code>validFrom</code>.</td></tr>
+<tr><td><code>manifestHash</code></td><td>SHOULD for persistent signals</td><td>The <code>manifestHash</code> of the Space Manifest under which the signal was issued.</td></tr>
+</tbody>
+</table>
+</div>
+<p>At the credential level, <code>issuer</code> MUST be the evaluator's DID, <code>validFrom</code> MUST be present, and <code>credentialStatus</code> MUST be present in one of the forms of <a href="#status">section 10.3</a>. The <code>id</code> SHOULD be a UUID URN. A signal MUST carry exactly one proof from a supported cryptosuite over the whole credential.</p>
+<p>The distinction between verifying and validating a signal is deliberate. <dfn id="dfn-signal-verification">Verification</dfn> establishes that the signal is authentic and current: the issuer's DID resolves, the proof checks against an <code>assertionMethod</code> key, and the status is not revoked. <dfn id="dfn-signal-validation">Validation</dfn> establishes that the signal is meaningful in its Space: the dimensions are declared, the values are in range, the provenance parses and its <code>space</code> matches. A feedback service MUST verify before it validates, and MUST report the two kinds of failure with different error types (<a href="#http-errors">section 9.3</a>).</p>
+<div class="example" data-title="A human-issued, multi-dimension signal about a capability">
+<pre><code>{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://schema.agtp.org/context/v2"
+  ],
+  "id": "urn:uuid:0c9d7b5e-1f2a-4d3c-8e6f-7a5b4c3d2e1f",
+  "type": ["VerifiableCredential", "LearningSignal"],
+  "issuer": "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",
+  "validFrom": "2026-09-03T14:02:11Z",
+  "credentialSubject": {
+    "id": "urn:air:solver.example:tool:run-sql",
+    "subject": "urn:air:solver.example:tool:run-sql",
+    "space": "did:web:rlvr.example",
+    "dimensions": ["accuracy", "latency"],
+    "value": [0.9, 4.2],
+    "persistence": "persistent",
+    "provenance": "agtp://provenance?space=did:web:rlvr.example&amp;interaction=urn:uuid:6d2a…&amp;artifact=bafybeia…,bafybeib…",
+    "issuerRelation": "independent",
+    "confidence": 0.8,
+    "comment": "Correct result; one retry on a transient timeout.",
+    "manifestHash": "uEiCz7m5gq4Vh2kQ2Jm7Y1Q2m3k6nJ1c2f4b7dq6l5o8q9pA"
+  },
+  "credentialStatus": {
+    "id": "https://rlvr.example/.well-known/agtp/status?signal=uEiA4…",
+    "type": "AGTPSpaceStatus"
+  },
+  "proof": { "type": "DataIntegrityProof", "cryptosuite": "eddsa-rdfc-2022",
+             "created": "2026-09-03T14:02:12Z",
+             "verificationMethod": "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH#z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",
+             "proofPurpose": "assertionMethod", "proofValue": "z2p…" }
+}</code></pre>
+<p>The subject is a capability rather than an agent, identified by the ARD entry through which it was discovered. The status entry uses the Space's status API rather than a bitstring list, which suits issuers that hold no infrastructure of their own.</p>
+</div>
+</section>
+
+<section id="receipt">
+<h3>Receipt and Interaction Receipt</h3>
+<p>A <a class="term" href="#dfn-receipt">receipt</a> is returned for every signal delivered under the HTTP profile. It is a JSON object with the properties below. A receipt MAY be wrapped as a credential of type <code>InteractionReceipt</code> whose <code>credentialSubject</code> carries the same properties; Spaces SHOULD issue signed receipts, and receivers MUST issue a signed receipt when the sender requests one with the <code>Prefer: agtp-signed-receipt</code> request header.</p>
+<div class="table-wrap">
+<table class="props">
+<caption>Receipt properties</caption>
+<thead><tr><th>Property</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>receiptId</code></td><td>MUST</td><td>A URI, RECOMMENDED a UUID URN, unique per receiver.</td></tr>
+<tr><td><code>signalHash</code></td><td>MUST</td><td>The <code>signalHash</code> of the delivered signal as computed by the receiver (<a href="#hashing">§10.2</a>). A sender MUST compare it with its own computation and treat a mismatch as a failed delivery.</td></tr>
+<tr><td><code>acceptState</code></td><td>MUST</td><td><code>accepted</code>, <code>rejected</code> or <code>pending</code>.</td></tr>
+<tr><td><code>reason</code></td><td>MUST when <code>rejected</code>; MAY otherwise</td><td>A problem type URI from <a href="#http-errors">§9.3</a> or a Space-defined URI, optionally followed by text.</td></tr>
+<tr><td><code>receivedAt</code></td><td>MUST</td><td>An <cite>[<a href="#bib-rfc3339">RFC3339</a>]</cite> timestamp.</td></tr>
+<tr><td><code>receiver</code></td><td>SHOULD</td><td>The DID of the receiving agent or Space.</td></tr>
+<tr><td><code>space</code></td><td>SHOULD</td><td>The Space named by the signal.</td></tr>
+<tr><td><code>nonce</code></td><td>SHOULD</td><td>The <code>AGTP-Nonce</code> value consumed by the delivery.</td></tr>
+<tr><td><code>idempotencyKey</code></td><td>SHOULD</td><td>The <code>Idempotency-Key</code> value of the delivery.</td></tr>
+<tr><td><code>signalId</code></td><td>MAY</td><td>The <code>id</code> of the delivered signal, when present.</td></tr>
+</tbody>
+</table>
+</div>
+<p>A receipt in the <code>pending</code> state is a promise to validate later, used during partitions and for signals that require asynchronous checks. A receiver that returns <code>pending</code> MUST later publish a final state through its status resource or its signal index, and senders SHOULD poll no more often than the <code>Retry-After</code> header of the pending response suggests.</p>
+</section>
+
+<section id="capability-descriptor">
+<h3>Capability Descriptor</h3>
+<p>A Capability Descriptor is a credential of type <code>CapabilityDescriptor</code> issued by the DID that owns the capability. It normalises descriptions that arrive in many forms—MCP catalogs, A2A Agent Cards, Agent Skills frontmatter, API tool schemas, OKF attested computations—into one shape that Spaces can evaluate against observed behaviour.</p>
+<div class="table-wrap">
+<table class="props">
+<caption>Capability Descriptor <code>credentialSubject</code> properties</caption>
+<thead><tr><th>Property</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td>MUST</td><td>The capability URI. SHOULD be the ARD identifier when the capability is published through ARD.</td></tr>
+<tr><td><code>owner</code></td><td>MUST</td><td>The DID of the agent that provides the capability; equal to <code>issuer</code> unless a delegation credential says otherwise.</td></tr>
+<tr><td><code>name</code></td><td>MUST</td><td>A short human-readable name.</td></tr>
+<tr><td><code>description</code></td><td>SHOULD</td><td>A human-readable description; for ARD-published capabilities, the same text as the entry's <code>description</code>.</td></tr>
+<tr><td><code>interfaceType</code></td><td>MUST</td><td>One of <code>mcp-tool</code>, <code>mcp-resource</code>, <code>mcp-prompt</code>, <code>a2a-skill</code>, <code>api-tool</code>, <code>agent-skill</code>, <code>okf-computation</code> or <code>policy-only</code>, or a registered extension (<a href="#registries">Appendix F</a>).</td></tr>
+<tr><td><code>interface</code></td><td>MUST unless <code>policy-only</code></td><td>An object with <code>protocol</code>, <code>version</code> and the protocol-specific locator fields defined by the binding profile (for example <code>server</code> and <code>tool</code> for MCP, <code>agentCard</code> and <code>skill</code> for A2A), plus <code>schemaHash</code>, the multibase multihash of the exact schema payload advertised at descriptor time.</td></tr>
+<tr><td><code>inputSchema</code>, <code>outputSchema</code></td><td>SHOULD</td><td>JSON Schema objects or URIs of them. When both a schema and <code>schemaHash</code> are present they MUST agree.</td></tr>
+<tr><td><code>constraints</code></td><td>MAY</td><td>An object carrying policy and behavioural hints: MCP tool annotations, Agent Skills <code>allowed-tools</code>, AGENTS.md policy references, authentication requirements, environment requirements.</td></tr>
+<tr><td><code>sourceArtifacts</code></td><td>SHOULD</td><td>An array of artifact references (<a href="#artifact-identifiers">§3.2</a>) to the documents the descriptor was derived from: the catalog payload, the Agent Card, the SKILL.md file, the OKF concept.</td></tr>
+<tr><td><code>version</code></td><td>SHOULD</td><td>The upstream version string, if any.</td></tr>
+<tr><td><code>contentHash</code></td><td>MUST</td><td>The multibase multihash of the canonicalised descriptor without <code>proof</code> and without this property. Two descriptors with equal <code>contentHash</code> describe the same capability version.</td></tr>
+<tr><td><code>discovery</code></td><td>MAY</td><td>An object with <code>ard</code> (the ARD identifier) and <code>registries</code>.</td></tr>
+<tr><td><code>spaces</code></td><td>MAY</td><td>An array of Space DIDs in which the owner invites evaluation of this capability.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The same underlying capability exposed through several protocols—an A2A skill that is also an MCP tool and an API function—SHOULD be described by one descriptor with one <code>id</code> and several entries under <code>interface.bindings</code>, rather than by several descriptors, so that signals about it accumulate in one place. Each binding carries its own <code>protocol</code>, <code>version</code>, locator and <code>schemaHash</code>.</p>
+</section>
+
+<section id="anchor-commitment">
+<h3>Anchor Commitment</h3>
+<p>An Anchor Commitment is a credential of type <code>AnchorCommitment</code> that binds a batch of AGTP objects to a record outside AGTP. AGTP mandates no ledger; the credential names the one that was used.</p>
+<div class="table-wrap">
+<table class="props">
+<caption>Anchor Commitment <code>credentialSubject</code> properties</caption>
+<thead><tr><th>Property</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td>MUST</td><td>A URI for the batch, RECOMMENDED a UUID URN.</td></tr>
+<tr><td><code>root</code></td><td>MUST</td><td>The multibase multihash of the batch root.</td></tr>
+<tr><td><code>tree</code></td><td>MUST</td><td>The tree construction. <code>rfc6962</code>, the Merkle Tree Hash of <cite>[<a href="#bib-rfc6962">RFC6962</a>]</cite> §2.1 over the sorted list of leaf hashes, is the baseline all implementations MUST support. Other constructions are registered in <a href="#registries">Appendix F</a>.</td></tr>
+<tr><td><code>hashAlgorithm</code></td><td>MUST</td><td>The multihash function name used for leaves and nodes; <code>sha2-256</code> baseline.</td></tr>
+<tr><td><code>covered</code></td><td>MUST</td><td>Either an array of leaf hashes (the <code>signalHash</code> or <code>contentHash</code> of each covered object, in leaf order) or an object with <code>uri</code> and <code>cid</code> of a batch manifest listing them.</td></tr>
+<tr><td><code>count</code></td><td>MUST</td><td>The number of leaves.</td></tr>
+<tr><td><code>space</code></td><td>SHOULD</td><td>The Space whose objects are covered, when the batch is Space-scoped.</td></tr>
+<tr><td><code>chain</code></td><td>MUST when anchored on a ledger</td><td>A CAIP-2 chain identifier <cite>[<a href="#bib-caip-2">CAIP-2</a>]</cite>, for example <code>eip155:1</code>.</td></tr>
+<tr><td><code>reference</code></td><td>MUST</td><td>An object locating the record: for ledgers, <code>contract</code> (a CAIP-10 account identifier <cite>[<a href="#bib-caip-10">CAIP-10</a>]</cite>), <code>transaction</code>, optionally <code>logIndex</code> and, for ERC-8004, <code>registry</code> and <code>requestHash</code>; for other services, a dereferenceable <code>uri</code>.</td></tr>
+<tr><td><code>anchoredAt</code></td><td>MUST</td><td>An <cite>[<a href="#bib-rfc3339">RFC3339</a>]</cite> timestamp of the record's inclusion, as observed by the issuer.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The same tree construction and leaf ordering define the <code>commitment</code> property of a distilled Learning Signal, so that a subject or auditor given the underlying ephemeral signals can recompute the root.</p>
+</section>
+
+<section id="observation-record">
+<h3>Observation Record</h3>
+<p>An Observation Record is a JSON-LD document whose <code>type</code> includes <code>ObservationRecord</code> and MAY include a profile-specific subtype such as <code>MCPToolCallRecord</code>, <code>A2ATaskEventRecord</code>, <code>ModelRunRecord</code> or <code>UIEventRecord</code>.</p>
+<div class="table-wrap">
+<table class="props">
+<caption>Observation Record properties</caption>
+<thead><tr><th>Property</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td>MUST</td><td>A URI, RECOMMENDED a UUID URN.</td></tr>
+<tr><td><code>space</code></td><td>MUST</td><td>The Space DID in which the interaction took place.</td></tr>
+<tr><td><code>actor</code></td><td>MUST</td><td>The DID of the agent that performed or initiated the observed activity.</td></tr>
+<tr><td><code>subject</code></td><td>SHOULD</td><td>The DID or URI of the agent or capability the observation is about, when different from <code>actor</code>.</td></tr>
+<tr><td><code>sourceProtocol</code></td><td>MUST</td><td>A registered profile identifier: <code>mcp</code>, <code>a2a</code>, <code>a2ui</code>, <code>openai-api</code>, <code>ard</code>, <code>okf</code>, <code>erc8004</code> or an extension.</td></tr>
+<tr><td><code>sourceVersion</code></td><td>SHOULD</td><td>The upstream protocol version, in the upstream's own format.</td></tr>
+<tr><td><code>sourceRefs</code></td><td>MUST</td><td>An object of upstream identifiers as defined by the binding profile. Profiles MUST preserve upstream ordering semantics where events are ordered.</td></tr>
+<tr><td><code>interaction</code></td><td>MUST</td><td>The interaction identifier (<a href="#interaction-identifiers">§3.3</a>).</td></tr>
+<tr><td><code>artifacts</code></td><td>SHOULD</td><td>An array of artifact references with roles.</td></tr>
+<tr><td><code>provenance</code></td><td>SHOULD</td><td>The provenance URI an evaluator would use for a signal about this interaction.</td></tr>
+<tr><td><code>capabilityRefs</code></td><td>MAY</td><td>An array of capability URIs whose descriptors were in force, with their <code>contentHash</code>.</td></tr>
+<tr><td><code>policyRefs</code></td><td>MAY</td><td>An array of URIs or artifact references to policy documents in force (AGENTS.md, manifests, registry records).</td></tr>
+<tr><td><code>observedAt</code></td><td>MUST</td><td>An <cite>[<a href="#bib-rfc3339">RFC3339</a>]</cite> timestamp.</td></tr>
+<tr><td><code>privacyClass</code></td><td>MUST</td><td><code>ephemeral</code>, <code>persistent</code>, <code>redacted</code> or <code>committed-only</code>.</td></tr>
+<tr><td><code>claims</code></td><td>MAY</td><td>An object of profile-defined facts: status, counts, durations, error codes. Facts, not judgments.</td></tr>
+<tr><td><code>proof</code></td><td>MAY</td><td>A Data Integrity proof by <code>actor</code> or by the integrator.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>

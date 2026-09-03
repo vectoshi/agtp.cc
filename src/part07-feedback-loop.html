@@ -1,0 +1,109 @@
+<section id="feedback-loop">
+<h2>The Feedback Loop</h2>
+<p>AGTP has one core mechanic. An evaluator resolves the party it wants to evaluate, reads the rules of the Space in which the evaluation takes place, issues a signed Learning Signal bound to reproducible provenance, delivers it to the subject and to the Space, and collects receipts. The Space aggregates what it accepts; consumers route on the aggregate; private learners update on ephemeral signals and distil them later. The figure shows the delivery path; the numbered operations that follow are normative.</p>
+<figure id="fig-feedback-loop">
+<svg viewBox="0 0 900 430" role="img" aria-label="Sequence of one AGTP feedback loop: the evaluator resolves the subject's DID, fetches the Space Manifest, obtains a replay nonce from the subject's feedback service, delivers the signed signal with the nonce and an idempotency key and receives a receipt carrying the signal hash, delivers the same signal to the Space and receives a signed receipt, and the Space verifies, validates, deduplicates and aggregates before exposing the result for routing." font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="seq-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+    </marker>
+  </defs>
+  <!-- lifeline heads -->
+  <g fill="none" stroke="currentColor" stroke-width="1.4">
+    <rect x="30" y="18" width="150" height="40" rx="3"></rect>
+    <rect x="255" y="18" width="150" height="40" rx="3"></rect>
+    <rect x="480" y="18" width="170" height="40" rx="3"></rect>
+    <rect x="725" y="18" width="150" height="40" rx="3"></rect>
+  </g>
+  <g fill="currentColor" text-anchor="middle" font-weight="500">
+    <text x="105" y="36">Evaluator</text>
+    <text x="330" y="36">DID resolver</text>
+    <text x="565" y="36">Subject feedback service</text>
+    <text x="800" y="36">Space</text>
+  </g>
+  <g fill="currentColor" text-anchor="middle" font-size="11">
+    <text x="105" y="51">did:web:verifier.example</text>
+    <text x="330" y="51">method resolution</text>
+    <text x="565" y="51">/.well-known/agtp/feedback</text>
+    <text x="800" y="51">did:web:rlvr.example</text>
+  </g>
+  <!-- lifelines -->
+  <g stroke="currentColor" stroke-width="1" stroke-dasharray="4 4">
+    <line x1="105" y1="58" x2="105" y2="415"></line>
+    <line x1="330" y1="58" x2="330" y2="415"></line>
+    <line x1="565" y1="58" x2="565" y2="415"></line>
+    <line x1="800" y1="58" x2="800" y2="415"></line>
+  </g>
+  <!-- messages -->
+  <g stroke="currentColor" stroke-width="1.4" fill="none">
+    <line x1="105" y1="92" x2="328" y2="92" marker-end="url(#seq-arrow)"></line>
+    <line x1="330" y1="112" x2="107" y2="112" marker-end="url(#seq-arrow)" stroke-dasharray="5 3"></line>
+    <line x1="105" y1="150" x2="798" y2="150" marker-end="url(#seq-arrow)"></line>
+    <line x1="800" y1="170" x2="107" y2="170" marker-end="url(#seq-arrow)" stroke-dasharray="5 3"></line>
+    <line x1="105" y1="208" x2="563" y2="208" marker-end="url(#seq-arrow)"></line>
+    <line x1="565" y1="228" x2="107" y2="228" marker-end="url(#seq-arrow)" stroke-dasharray="5 3"></line>
+    <line x1="105" y1="266" x2="563" y2="266" marker-end="url(#seq-arrow)" class="fig-accent" stroke-width="2"></line>
+    <line x1="565" y1="286" x2="107" y2="286" marker-end="url(#seq-arrow)" stroke-dasharray="5 3"></line>
+    <line x1="105" y1="324" x2="798" y2="324" marker-end="url(#seq-arrow)" class="fig-accent" stroke-width="2"></line>
+    <line x1="800" y1="344" x2="107" y2="344" marker-end="url(#seq-arrow)" stroke-dasharray="5 3"></line>
+  </g>
+  <g fill="currentColor" font-size="11">
+    <text x="112" y="87">1 resolve subject DID</text>
+    <text x="112" y="125">DID Document → AGTPFeedbackService endpoint</text>
+    <text x="112" y="145">2 GET /.well-known/agtp/space/{id}  (If-None-Match)</text>
+    <text x="112" y="183">Space Manifest · ETag = manifestHash · validUntil</text>
+    <text x="112" y="203">3 HEAD /.well-known/agtp/feedback</text>
+    <text x="112" y="241">Replay-Nonce</text>
+    <text x="112" y="261" font-weight="500">4 POST signal · AGTP-Nonce · Idempotency-Key</text>
+    <text x="112" y="299">200 receipt { signalHash, acceptState: accepted }</text>
+    <text x="112" y="319" font-weight="500">5 POST same signal · same Idempotency-Key</text>
+    <text x="112" y="357">200 or 202 signed InteractionReceipt</text>
+  </g>
+  <!-- space processing box -->
+  <rect x="722" y="366" width="156" height="42" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"></rect>
+  <g fill="currentColor" text-anchor="middle" font-size="11">
+    <text x="800" y="383">6 verify · validate · dedupe</text>
+    <text x="800" y="399">aggregate → index for routing</text>
+  </g>
+</svg>
+<figcaption>One delivery of one Learning Signal. Solid arrows are requests, dashed arrows are responses; the two highlighted requests carry the signal itself. The Space's processing after acceptance is internal to the Space.</figcaption>
+</figure>
+
+<section id="feedback-operations">
+<h3>Operations</h3>
+<p>The operations below are stack-agnostic; the HTTP profile of <a href="#http-profile">section 9</a> binds them to concrete requests, and the DIDComm profile of <a href="#http-didcomm">section 9.9</a> binds them to messages. Each operation is labelled with its requirement level for an implementation that performs it; operations labelled <em>policy</em> are outside the protocol.</p>
+<ol>
+<li><strong>Resolve</strong> (MUST). Given a subject DID, resolve its DID Document and read the <code>AGTPFeedbackService</code> endpoint. An evaluator MUST NOT deliver to an endpoint obtained by any other means unless the subject's DID Document is unavailable and the endpoint was obtained from a verified ARD entry bound to the same DID (<a href="#discovery-verifying">section 7.2</a>).</li>
+<li><strong>Negotiate</strong> (SHOULD). Read the subject's and the Space's capabilities documents (<a href="#http-capabilities">section 9.6</a>) and choose a transport profile and cryptosuite both support. In the absence of a capabilities document, the HTTP profile and the baseline cryptosuite apply.</li>
+<li><strong>Declare context</strong> (MUST). Fetch the Space Manifest, verify its proof and status, confirm that the current time lies within <code>validFrom</code> and <code>validUntil</code>, and record its <code>manifestHash</code>. Every dimension the evaluator intends to use MUST be declared by that manifest.</li>
+<li><strong>Act and evaluate</strong> (policy). Perform the task, run verifiers, tournaments, audits, attesters or human review. Record observations and content-address the artifacts that the evaluation depends on. Which artifacts to retain, and in what privacy class, is a Space policy matter; that an evaluation binds to <em>some</em> reproducible artifact is not.</li>
+<li><strong>Issue</strong> (MUST). Construct the Learning Signal with the required properties of <a href="#learning-signal">section 5.3</a>, sign it with a key listed under the issuer's <code>assertionMethod</code>, and compute its <code>signalHash</code>.</li>
+<li><strong>Deliver</strong> (MUST). Obtain a fresh nonce from the subject's feedback service, deliver the signal with the nonce and an idempotency key, and obtain a receipt. Compare the receipt's <code>signalHash</code> with the locally computed one; a mismatch MUST be treated as a failed delivery. Persistent signals SHOULD also be delivered to the Space's feedback service with the same idempotency key, and MUST be when the Space's persistence policy is <code>space-index</code> or <code>public-index</code>. Ephemeral signals MAY be delivered only to the subject.</li>
+<li><strong>Persist or distil</strong> (policy). Store private artifacts and ephemeral signals under the retention ceiling of the Space's persistence policy. When publishing a persistent summary of ephemeral signals, the summary MUST carry a <code>commitment</code> over them.</li>
+<li><strong>Aggregate</strong> (MUST at the Space). Verify and validate each accepted signal, deduplicate by <code>signalHash</code>, check status, and apply the manifest's aggregation rule or the reference default of <a href="#aggregation">section 11</a>. Aggregates MUST be recomputable from the persistent signals the Space serves.</li>
+<li><strong>Discover and route</strong> (policy). Index persistent signals and expose aggregates. Consumers select agents and capabilities using the aggregates, the descriptors and the discovery entries; how they weigh them is their own policy.</li>
+</ol>
+</section>
+
+<section id="feedback-issuance-points">
+<h3>What Becomes a Signal</h3>
+<p>A signal is an evaluative judgment. Runtime facts are observations. The following rules keep the two apart:</p>
+<ul>
+<li>Transport success, a syntactically valid response, an HTTP 200, an A2A task in the <code>completed</code> state, a successful MCP tool result or a model-API response with no error MUST NOT by themselves be emitted as Learning Signals. They MAY be recorded as observations.</li>
+<li>Usage telemetry—tokens, latency, cost, event counts—is observation data. A Space evaluator MAY compute a signal from it, and when it does the signal's provenance MUST bind to the observation records or artifacts it used.</li>
+<li>A Learning Signal SHOULD be issued at a declared issuance point: post-completion verification by a verifier, peer review by another agent, a tournament or benchmark outcome, an explicit human judgment captured through an interface, or the result of a deterministic attester (<a href="#knowledge-attestation">section 8.3</a>). Binding profiles name the issuance points they support.</li>
+<li>Several calls inside one run MAY roll up into one signal about the run, provided the provenance URI's artifacts preserve lineage to the individual outputs.</li>
+</ul>
+</section>
+
+<section id="feedback-examples">
+<h3>Illustrative Loops</h3>
+<p><em>This section is non-normative.</em></p>
+<ul>
+<li><strong>Reproducible tournament.</strong> A solver submits an answer; a verifier evaluates it against a held-out test case. The verifier issues a persistent signal in <code>did:web:rlvr.example</code> on <code>accuracy</code> with provenance binding the test-case CID and the output CID. Anyone can re-run the check from provenance, which is what stops a leaderboard being gamed.</li>
+<li><strong>Microscopic checks.</strong> A model produces a chain of reasoning; a private tool issues ephemeral signals on <code>consistency</code> and <code>grounding</code> at each step. A distilled persistent signal is later published with aggregated values, a link to a redacted trace and a commitment over the ephemeral set.</li>
+<li><strong>Knowledge quality.</strong> An analyst confirms that an OKF concept describing a revenue metric is correct. The confirmation is recorded in the concept's <code>verified</code> list and backed by a persistent signal on <code>accuracy</code> whose subject is the concept and whose provenance artifact is the concept's CID; the next reader can check both.</li>
+<li><strong>Discovered capability.</strong> An orchestrator finds a tool through an ARD registry, verifies its publisher's DID, invokes it over MCP and, after a Space evaluator scores the result, the signal accumulates against the capability's ARD identifier, where the next searcher will find it.</li>
+</ul>
+</section>
+</section>

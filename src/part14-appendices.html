@@ -1,0 +1,501 @@
+<section id="openapi" class="appendix">
+<h2>HTTP Profile OpenAPI Description</h2>
+<p>The following OpenAPI 3.1 <cite>[<a href="#bib-openapi">OPENAPI</a>]</cite> description is normative for the HTTP profile <code>http/1.1</code>; the resources marked optional are advertised by features in the capabilities document. Schema references resolve to <a href="#schemas">Appendix B</a>.</p>
+<pre><code>openapi: 3.1.0
+info:
+  title: AGTP HTTP Profile
+  version: "1.1.0"
+  description: Mandatory transport profile for AGTP 2.1.
+servers:
+  - url: https://{host}
+paths:
+  /.well-known/agtp/feedback:
+    head:
+      summary: Obtain a replay nonce
+      responses:
+        "200":
+          description: Nonce issued
+          headers:
+            Replay-Nonce: { required: true, schema: { type: string } }
+    post:
+      summary: Deliver a Learning Signal
+      parameters:
+        - { in: header, name: AGTP-Nonce, required: true, schema: { type: string } }
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string, format: uuid } }
+        - { in: header, name: Prefer, required: false, schema: { type: string, enum: [agtp-signed-receipt] } }
+      requestBody:
+        required: true
+        content:
+          application/vc:
+            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+          application/vc+ld+json:
+            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+          application/vc+json:
+            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+      responses:
+        "200":
+          description: Accepted (or already accepted with the same signalHash)
+          headers: { Replay-Nonce: { schema: { type: string } } }
+          content:
+            application/json: { schema: { $ref: "https://schema.agtp.org/json/receipt.schema.json" } }
+            application/vc: { schema: { type: object, description: InteractionReceipt credential } }
+        "202":
+          description: Pending validation
+          headers:
+            Retry-After: { schema: { type: integer } }
+            Replay-Nonce: { schema: { type: string } }
+          content:
+            application/json: { schema: { $ref: "https://schema.agtp.org/json/receipt.schema.json" } }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "406": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "413": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /.well-known/agtp/space/{spaceId}:
+    get:
+      summary: Fetch the Space Manifest
+      parameters:
+        - { in: path, name: spaceId, required: true, schema: { type: string }, description: The Space DID, percent-encoded }
+        - { in: query, name: version, required: false, schema: { type: string } }
+        - { in: header, name: If-None-Match, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Space Manifest credential
+          headers:
+            ETag: { required: true, schema: { type: string } }
+            Cache-Control: { required: true, schema: { type: string } }
+          content:
+            application/vc: { schema: { $ref: "https://schema.agtp.org/json/space-manifest.schema.json" } }
+        "304": { description: Not modified }
+  /.well-known/agtp/status:
+    get:
+      summary: Status of a signal (Space status API)
+      parameters:
+        - { in: query, name: signal, required: false, schema: { type: string }, description: signalHash }
+        - { in: query, name: id, required: false, schema: { type: string, format: uri } }
+      responses:
+        "200":
+          description: Status record
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, updatedAt]
+                properties:
+                  signalHash: { type: string }
+                  status: { type: string, enum: [valid, revoked, suspended, unknown] }
+                  reason: { type: string, format: uri }
+                  updatedAt: { type: string, format: date-time }
+  /.well-known/agtp/capabilities:
+    get:
+      summary: Supported versions, profiles and suites
+      responses:
+        "200":
+          description: Capabilities document
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [agtpVersion, did, updatedAt]
+                properties:
+                  agtpVersion: { type: string }
+                  did: { type: string }
+                  supportedProfiles: { type: array, items: { type: string } }
+                  cryptosuites: { type: array, items: { type: string } }
+                  signatureSuites: { type: array, items: { type: string }, deprecated: true }
+                  statusFormats: { type: array, items: { type: string } }
+                  hashing: { type: array, items: { type: string } }
+                  features: { type: array, items: { type: string } }
+                  extensions: { type: array, items: { type: string, format: uri } }
+                  updatedAt: { type: string, format: date-time }
+  /.well-known/agtp/signals:
+    get:
+      summary: List persistent signals (optional; feature signalIndex)
+      parameters:
+        - { in: query, name: subject, schema: { type: string, format: uri } }
+        - { in: query, name: space, schema: { type: string } }
+        - { in: query, name: dimension, schema: { type: string } }
+        - { in: query, name: issuer, schema: { type: string } }
+        - { in: query, name: since, schema: { type: string, format: date-time } }
+        - { in: query, name: until, schema: { type: string, format: date-time } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 1000 } }
+        - { in: query, name: cursor, schema: { type: string } }
+      responses:
+        "200":
+          description: Page of signals
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [signals]
+                properties:
+                  signals:
+                    type: array
+                    items:
+                      oneOf:
+                        - { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+                        - { type: object, required: [signalHash, url],
+                            properties: { signalHash: { type: string }, url: { type: string, format: uri } } }
+                  next: { type: string }
+  /.well-known/agtp/signals/{signalHash}:
+    get:
+      summary: Fetch one persistent signal (optional; feature signalIndex)
+      parameters:
+        - { in: path, name: signalHash, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: The signal
+          content:
+            application/vc: { schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" } }
+        "404": { $ref: "#/components/responses/Problem" }
+  /.well-known/agtp/metrics:
+    get:
+      summary: Operational metrics feed (optional; feature metricsFeed)
+      responses:
+        "200":
+          description: Metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [metric, value, window, method, lastUpdated]
+                  properties:
+                    metric: { type: string }
+                    value: { type: number }
+                    window: { type: string }
+                    method: { type: string }
+                    lastUpdated: { type: string, format: date-time }
+components:
+  responses:
+    Problem:
+      description: Error
+      headers: { Replay-Nonce: { schema: { type: string } } }
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required: [type, title, status]
+            properties:
+              type: { type: string, format: uri }
+              title: { type: string }
+              status: { type: integer }
+              detail: { type: string }
+              instance: { type: string, format: uri }
+              receipt: { $ref: "https://schema.agtp.org/json/receipt.schema.json" }</code></pre>
+</section>
+
+<section id="conformance-descriptors" class="appendix">
+<h2>Conformance Requirements and Classes</h2>
+<p>Each identified requirement below restates, in one line, a requirement made normatively in the body of this specification; the body prevails. Conformance classes aggregate requirements so that implementations can claim them independently and test suites can be organised by class. The descriptors are published in machine-readable form at <code>https://schema.agtp.org/conformance/2.1.json</code>.</p>
+<div class="table-wrap">
+<table class="req-table">
+<caption>Identified requirements</caption>
+<thead><tr><th>Identifier</th><th>Requirement</th><th>Section</th></tr></thead>
+<tbody>
+<tr><td>REQ-DID-1</td><td>Use a resolvable DID; advertise an <code>AGTPFeedbackService</code>.</td><td><a href="#agent-did-document">§5.1</a></td></tr>
+<tr><td>REQ-DID-2</td><td>List an assertion key usable with a supported cryptosuite; fail closed on unresolvable DIDs.</td><td><a href="#agent-space-identifiers">§3.1</a></td></tr>
+<tr><td>REQ-VC-CONTEXT-1</td><td>Credentials carry the VC 2.0 base context and the AGTP v2 context, one AGTP type, a DID issuer and <code>validFrom</code>.</td><td><a href="#credential-family">§4.2</a></td></tr>
+<tr><td>REQ-VC-LEGACY-1</td><td>Accept v2 credentials (v1 context, <code>issuanceDate</code>, <code>Ed25519Signature2020</code>, <code>StatusList2021Entry</code>) during the overlap window.</td><td><a href="#migration">§13.2</a></td></tr>
+<tr><td>REQ-FBSVC-HTTP-1</td><td>Expose <code>/.well-known/agtp/feedback</code> with HEAD and POST over TLS.</td><td><a href="#http-feedback">§9.1</a></td></tr>
+<tr><td>REQ-FBSVC-NONCE-1</td><td>HEAD returns <code>Replay-Nonce</code>; POST requires a valid, unused <code>AGTP-Nonce</code>.</td><td><a href="#http-nonce">§9.2</a></td></tr>
+<tr><td>REQ-HTTP-ACCEPT-1</td><td>Accept <code>application/vc</code> and the legacy VC media types.</td><td><a href="#representations">§4.5</a></td></tr>
+<tr><td>REQ-HTTP-RECEIPT-1</td><td>Return a receipt with <code>receiptId</code>, <code>signalHash</code>, <code>acceptState</code> and <code>receivedAt</code>; sign it when requested.</td><td><a href="#receipt">§5.4</a></td></tr>
+<tr><td>REQ-HTTP-PROBLEM-1</td><td>Report errors as Problem Details with registered AGTP problem types, distinguishing verification from validation failures.</td><td><a href="#http-errors">§9.3</a></td></tr>
+<tr><td>REQ-IDEMPOTENCY-1</td><td>Require <code>Idempotency-Key</code>; answer repeats with 409 and the original receipt; remember keys for 24 hours.</td><td><a href="#http-nonce">§9.2</a></td></tr>
+<tr><td>REQ-NONCE-USE-1</td><td>Senders include the latest nonce and reuse the idempotency key on retries.</td><td><a href="#http-nonce">§9.2</a></td></tr>
+<tr><td>REQ-DISCOVERY-CACHE-1</td><td>Cache Space Manifests by <code>manifestHash</code> and honour <code>ETag</code> and <code>validUntil</code>.</td><td><a href="#space-manifest">§5.2</a></td></tr>
+<tr><td>REQ-SMAN-VC-1</td><td>The Space Manifest is a credential issued by the Space DID with credential-level validity.</td><td><a href="#space-manifest">§5.2</a></td></tr>
+<tr><td>REQ-SMAN-DIMS-1</td><td>Declare each dimension with <code>range</code> and <code>higherIsBetter</code>; never declare a <code>draft</code> registry concept.</td><td><a href="#space-manifest">§5.2</a></td></tr>
+<tr><td>REQ-SMAN-AGG-1</td><td>Declare aggregation or accept the reference default; aggregation is a pure function of served signals.</td><td><a href="#aggregation">§11</a></td></tr>
+<tr><td>REQ-SMAN-CACHE-1</td><td>Serve the manifest with <code>ETag</code> equal to <code>manifestHash</code> and bounded <code>Cache-Control</code>.</td><td><a href="#http-space">§9.4</a></td></tr>
+<tr><td>REQ-SMAN-SIGN-1</td><td>Include <code>version</code> and <code>manifestHash</code>; increment <code>version</code> on change.</td><td><a href="#space-manifest">§5.2</a></td></tr>
+<tr><td>REQ-SMAN-STATUS-1</td><td>Expose a status resource or bitstring list for manifests and accepted signals.</td><td><a href="#http-status">§9.5</a></td></tr>
+<tr><td>REQ-SIG-MIN-1</td><td>Signals include <code>subject</code>, <code>space</code>, <code>dimensions</code>, <code>value</code>, <code>persistence</code> and <code>provenance</code>, with values in range.</td><td><a href="#learning-signal">§5.3</a></td></tr>
+<tr><td>REQ-SIG-PROV-1</td><td>Provenance conforms to the ABNF, names the signal's Space and is compared after normalisation.</td><td><a href="#provenance-uri">§3.5</a></td></tr>
+<tr><td>REQ-SIG-PROOF-1</td><td>Signals carry a Data Integrity proof with <code>eddsa-rdfc-2022</code> and purpose <code>assertionMethod</code>.</td><td><a href="#proofs">§10.1</a></td></tr>
+<tr><td>REQ-SIG-STATUS-1</td><td>Signals carry <code>credentialStatus</code> as a bitstring entry or Space status entry.</td><td><a href="#status">§10.3</a></td></tr>
+<tr><td>REQ-COMMITMENT-1</td><td>Distilled persistent signals carry a <code>commitment</code> computed with the baseline tree.</td><td><a href="#learning-signal">§5.3</a></td></tr>
+<tr><td>REQ-ISSUER-REL-1</td><td>Include <code>issuerRelation</code> when known.</td><td><a href="#learning-signal">§5.3</a></td></tr>
+<tr><td>REQ-VERIFY-VC-1</td><td>Verify proofs against <code>assertionMethod</code> keys; fail closed on unsupported suites.</td><td><a href="#proofs">§10.1</a></td></tr>
+<tr><td>REQ-VERIFY-PROV-1</td><td>Validate provenance grammar and Space match; dereference components where possible.</td><td><a href="#provenance-uri">§3.5</a></td></tr>
+<tr><td>REQ-STATUS-CHECK-1</td><td>Check status before aggregation, routing, anchoring or presentation; treat unretrievable status as unknown.</td><td><a href="#status">§10.3</a></td></tr>
+<tr><td>REQ-DEDUP-1</td><td>Compute <code>signalHash</code> per §10.2 and treat equal hashes as one signal.</td><td><a href="#hashing">§10.2</a></td></tr>
+<tr><td>REQ-AGG-DEFAULT-1</td><td>Apply the reference default when the manifest omits aggregation.</td><td><a href="#aggregation-default">§11.1</a></td></tr>
+<tr><td>REQ-AGG-PUBLISH-1</td><td>Publish <code>manifestHash</code>, distinct-issuer count and window with every aggregate.</td><td><a href="#aggregation-default">§11.1</a></td></tr>
+<tr><td>REQ-REPRO-ARTIFACTS-1</td><td>Attempt reproduction when artifacts are public.</td><td><a href="#security-reproducibility">§14.5</a></td></tr>
+<tr><td>REQ-OBS-MIN-1</td><td>Observation records carry the required properties and a privacy class.</td><td><a href="#observation-record">§5.7</a></td></tr>
+<tr><td>REQ-OBS-ORDER-1</td><td>Preserve upstream identifiers and event ordering in <code>sourceRefs</code>.</td><td><a href="#profile-contract">§12.1</a></td></tr>
+<tr><td>REQ-OBS-SEPARATE-1</td><td>Never emit execution or transport outcomes as signals.</td><td><a href="#feedback-issuance-points">§6.2</a></td></tr>
+<tr><td>REQ-CAP-DESC-1</td><td>Descriptors carry <code>id</code>, <code>owner</code>, <code>name</code>, <code>interfaceType</code>, <code>interface</code> and <code>contentHash</code>.</td><td><a href="#capability-descriptor">§5.5</a></td></tr>
+<tr><td>REQ-CAP-HASH-1</td><td>Regenerate descriptors with a new <code>contentHash</code> and <code>schemaHash</code> whenever the upstream schema changes.</td><td><a href="#profile-mcp">§12.3</a></td></tr>
+<tr><td>REQ-ARD-PUBLISH-1</td><td>Publish <code>/.well-known/ard.json</code>; AGTP entries bind the <code>agtp</code> prefix and carry <code>agtp:did</code>.</td><td><a href="#discovery-publishing">§7.1</a></td></tr>
+<tr><td>REQ-ARD-IDENTITY-1</td><td><code>trustManifest.identity</code> names the DID framework and the same DID as <code>agtp:did</code>.</td><td><a href="#discovery-verifying">§7.2</a></td></tr>
+<tr><td>REQ-ARD-VERIFY-1</td><td>Registries establish mutual DID–domain binding and verify an attestation before marking <code>agtp:verified</code>.</td><td><a href="#discovery-verifying">§7.2</a></td></tr>
+<tr><td>REQ-ARD-SCORE-1</td><td>Never use an ARD relevance score as trust; rank on verified state and recomputable aggregates.</td><td><a href="#discovery-selection">§7.3</a></td></tr>
+<tr><td>REQ-ARD-FEDERATE-1</td><td>Do not forward another registry's <code>agtp:verified</code> as your own.</td><td><a href="#discovery-registries">§7.4</a></td></tr>
+<tr><td>REQ-ARD-DELIVER-1</td><td>Do not deliver signals to endpoints learned only from unverified entries.</td><td><a href="#discovery-verifying">§7.2</a></td></tr>
+<tr><td>REQ-OKF-CID-1</td><td>Identify bundles by tree CID and concepts by file CID; verify against the manifest's <code>knowledge</code> entries.</td><td><a href="#knowledge-artifacts">§8.1</a></td></tr>
+<tr><td>REQ-OKF-ACTOR-1</td><td>Write DID actors inside OKF actor forms; recognise <code>did:</code> in any form.</td><td><a href="#knowledge-actors">§8.2.1</a></td></tr>
+<tr><td>REQ-OKF-VERIFIED-1</td><td>Derive attestation state from backing signals without altering OKF trust tiers.</td><td><a href="#knowledge-attestation">§8.3</a></td></tr>
+<tr><td>REQ-OKF-ATTEST-1</td><td>Content-address attested-computation receipts; issue the attester's verdict as a signal bound to concept, receipt and parameter CIDs.</td><td><a href="#knowledge-attestation">§8.3</a></td></tr>
+<tr><td>REQ-OKF-DIM-1</td><td>Dimension concepts carry <code>agtp.dimension</code>; manifests reference them by URL.</td><td><a href="#knowledge-dimensions">§8.4</a></td></tr>
+<tr><td>REQ-OKF-DATA-1</td><td>Treat knowledge bodies and tool descriptions as data, never as protocol operations.</td><td><a href="#knowledge-space-docs">§8.5</a></td></tr>
+<tr><td>REQ-MCP-META-1</td><td>Carry AGTP identifiers only under the <code>org.agtp/</code> prefix in <code>_meta</code>; ignore them when not understood.</td><td><a href="#profile-mcp">§12.3</a></td></tr>
+<tr><td>REQ-MCP-ARTIFACT-1</td><td>Content-address tool inputs and outputs and reference the descriptor <code>contentHash</code> in force.</td><td><a href="#profile-mcp">§12.3</a></td></tr>
+<tr><td>REQ-A2A-TASKID-1</td><td>Preserve task and context identifiers; never treat an A2A response as a receipt.</td><td><a href="#profile-a2a">§12.7</a></td></tr>
+<tr><td>REQ-ANCHOR-1</td><td>Anchor commitments carry <code>root</code>, <code>tree</code>, <code>hashAlgorithm</code>, <code>covered</code>, <code>count</code>, <code>reference</code> and <code>anchoredAt</code>.</td><td><a href="#anchor-commitment">§5.6</a></td></tr>
+<tr><td>REQ-ANCHOR-TREE-1</td><td>Support the <code>rfc6962</code> tree with <code>sha2-256</code>.</td><td><a href="#anchor-commitment">§5.6</a></td></tr>
+<tr><td>REQ-ANCHOR-OFFCHAIN-1</td><td>Keep signals, manifests and traces off-chain; anchor hashes and pointers only; keep AGTP verification independent of chain state.</td><td><a href="#profile-erc8004">§12.10</a></td></tr>
+</tbody>
+</table>
+</div>
+<pre><code>{
+  "agtpVersion": "2.1.0",
+  "conformanceClasses": [
+    { "id": "AGTP.Agent",
+      "must": ["REQ-DID-1", "REQ-DID-2", "REQ-FBSVC-HTTP-1", "REQ-FBSVC-NONCE-1", "REQ-HTTP-ACCEPT-1",
+               "REQ-HTTP-RECEIPT-1", "REQ-HTTP-PROBLEM-1", "REQ-IDEMPOTENCY-1", "REQ-VC-LEGACY-1"],
+      "should": ["REQ-DISCOVERY-CACHE-1", "REQ-ARD-PUBLISH-1"],
+      "profiles": ["http/1.1", "did-vc/2.1"] },
+    { "id": "AGTP.Space",
+      "must": ["REQ-DID-1", "REQ-SMAN-VC-1", "REQ-SMAN-DIMS-1", "REQ-SMAN-AGG-1", "REQ-SMAN-CACHE-1",
+               "REQ-SMAN-SIGN-1", "REQ-SMAN-STATUS-1", "REQ-DEDUP-1", "REQ-STATUS-CHECK-1", "REQ-AGG-PUBLISH-1"],
+      "should": ["REQ-OKF-DIM-1", "REQ-ARD-PUBLISH-1", "REQ-HTTP-RECEIPT-1"],
+      "profiles": ["http/1.1", "did-vc/2.1"] },
+    { "id": "AGTP.SignalProducer",
+      "must": ["REQ-VC-CONTEXT-1", "REQ-SIG-MIN-1", "REQ-SIG-PROV-1", "REQ-SIG-PROOF-1", "REQ-SIG-STATUS-1",
+               "REQ-NONCE-USE-1", "REQ-IDEMPOTENCY-1", "REQ-OBS-SEPARATE-1", "REQ-ARD-DELIVER-1"],
+      "should": ["REQ-COMMITMENT-1", "REQ-ISSUER-REL-1"],
+      "profiles": ["http/1.1", "did-vc/2.1"] },
+    { "id": "AGTP.SignalConsumer",
+      "must": ["REQ-VERIFY-VC-1", "REQ-VERIFY-PROV-1", "REQ-STATUS-CHECK-1", "REQ-DEDUP-1", "REQ-AGG-DEFAULT-1",
+               "REQ-VC-LEGACY-1"],
+      "should": ["REQ-REPRO-ARTIFACTS-1"],
+      "profiles": ["did-vc/2.1"] },
+    { "id": "AGTP.CapabilityPublisher",
+      "must": ["REQ-CAP-DESC-1", "REQ-CAP-HASH-1", "REQ-ARD-PUBLISH-1", "REQ-ARD-IDENTITY-1"],
+      "should": ["REQ-MCP-META-1"],
+      "profiles": ["did-vc/2.1", "ard/0.91"] },
+    { "id": "AGTP.KnowledgePublisher",
+      "must": ["REQ-OKF-CID-1", "REQ-OKF-ACTOR-1", "REQ-OKF-DATA-1"],
+      "should": ["REQ-OKF-VERIFIED-1", "REQ-OKF-ATTEST-1", "REQ-OKF-DIM-1", "REQ-ARD-PUBLISH-1"],
+      "profiles": ["did-vc/2.1", "okf/0.2"] },
+    { "id": "AGTP.DiscoveryRegistry",
+      "must": ["REQ-ARD-VERIFY-1", "REQ-ARD-SCORE-1", "REQ-ARD-FEDERATE-1", "REQ-VERIFY-VC-1", "REQ-STATUS-CHECK-1"],
+      "should": [],
+      "profiles": ["did-vc/2.1", "ard/0.91"] },
+    { "id": "AGTP.ExecutionIntegrator",
+      "must": ["REQ-OBS-MIN-1", "REQ-OBS-ORDER-1", "REQ-OBS-SEPARATE-1", "REQ-MCP-META-1", "REQ-MCP-ARTIFACT-1",
+               "REQ-A2A-TASKID-1", "REQ-OKF-DATA-1"],
+      "should": ["REQ-CAP-HASH-1"],
+      "profiles": ["did-vc/2.1", "mcp/2025-11-25", "a2a/1.0", "openai-api/1", "a2ui/0.8"] },
+    { "id": "AGTP.AnchorIntegrator",
+      "must": ["REQ-ANCHOR-1", "REQ-ANCHOR-TREE-1", "REQ-ANCHOR-OFFCHAIN-1", "REQ-STATUS-CHECK-1"],
+      "should": [],
+      "profiles": ["did-vc/2.1", "erc8004/1"] }
+  ]
+}</code></pre>
+</section>
+
+<section id="metrics" class="appendix informative">
+<h2>Operational Metrics</h2>
+<p>The metrics feed of <a href="#http-metrics">section 9.8</a> lets agents and Spaces publish indicators that third parties can audit. The following definitions, over 30-day rolling windows unless the feed says otherwise, are recommended so that feeds are comparable.</p>
+<div class="table-wrap">
+<table>
+<caption>Recommended metrics</caption>
+<thead><tr><th>Metric</th><th>Definition</th></tr></thead>
+<tbody>
+<tr><td><code>coverage</code></td><td>validSignals / interactionsObserved</td></tr>
+<tr><td><code>leeching</code></td><td>agentsWithoutHealthyFeedbackService / activeAgents</td></tr>
+<tr><td><code>reproducibility</code></td><td>reverifiedOutcomes / auditedOutcomes</td></tr>
+<tr><td><code>attestationRate</code></td><td>attestedConcepts / verifiedConcepts, for knowledge publishers</td></tr>
+<tr><td><code>discoveryVerification</code></td><td>agtpVerifiedEntries / ingestedAgtpEntries, for registries</td></tr>
+<tr><td><code>interopConformance</code></td><td>passes / totalCases, per conformance suite</td></tr>
+<tr><td><code>hhi</code></td><td>Σ sᵢ² over shares in identity, storage, registry and routing provider roles</td></tr>
+<tr><td><code>crossSpaceTransferLift</code></td><td>(scoreWithReuse − baselineScore) / baselineScore</td></tr>
+<tr><td><code>reIdIncidentRate</code></td><td>incidents / totalPersistentSignals</td></tr>
+<tr><td><code>reputationVolatility</code></td><td>stdev(monthlyScore) / mean(monthlyScore)</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="registries" class="appendix">
+<h2>AGTP Registries</h2>
+<p>The AGTP Consortium maintains the following registries, published at <code>https://schema.agtp.org/registries/</code> and, as recommended by <a href="#knowledge-dimensions">section 8.4</a>, as an OKF bundle. Registration is by pull request to the specification repository with a stable identifier, a specification reference and a contact. Initial contents are listed here; a registry may be extended without a new version of this document.</p>
+<div class="table-wrap">
+<table>
+<caption>Registries and initial contents</caption>
+<thead><tr><th>Registry</th><th>Initial entries</th></tr></thead>
+<tbody>
+<tr><td>Credential types</td><td><code>LearningSignal</code>, <code>SpaceManifest</code>, <code>InteractionReceipt</code>, <code>CapabilityDescriptor</code>, <code>AnchorCommitment</code>, <code>DelegationCredential</code>, <code>PolicyAssertion</code>; aliases with the <code>Credential</code> suffix</td></tr>
+<tr><td>Record types</td><td><code>ObservationRecord</code>, <code>MCPToolCallRecord</code>, <code>A2ATaskEventRecord</code>, <code>ModelRunRecord</code>, <code>UIEventRecord</code></td></tr>
+<tr><td>DID service types</td><td><code>AGTPFeedbackService</code>, <code>AGTPSpaceManifest</code>, <code>AGTPCapabilities</code>, <code>AGTPSignalIndex</code>, <code>AgenticResourceDiscovery</code>, <code>MCPServer</code>, <code>A2AAgentCard</code></td></tr>
+<tr><td>Credential status types</td><td><code>AGTPSpaceStatus</code></td></tr>
+<tr><td>Profile identifiers</td><td><code>did-vc/2.1</code>, <code>http/1.0</code>, <code>http/1.1</code>, <code>didcomm/2.0</code>, <code>mcp/2025-06-18</code>, <code>mcp/2025-11-25</code>, <code>ard/0.91</code>, <code>okf/0.2</code>, <code>openai-api/1</code>, <code>a2a/1.0</code>, <code>a2ui/0.8</code>, <code>a2ui/0.9</code>, <code>agents-skills/1</code>, <code>erc8004/1</code></td></tr>
+<tr><td>Interface types</td><td><code>mcp-tool</code>, <code>mcp-resource</code>, <code>mcp-prompt</code>, <code>a2a-skill</code>, <code>api-tool</code>, <code>agent-skill</code>, <code>okf-computation</code>, <code>policy-only</code>; extensions prefixed <code>x-</code></td></tr>
+<tr><td>Privacy classes</td><td><code>ephemeral</code>, <code>persistent</code>, <code>redacted</code>, <code>committed-only</code></td></tr>
+<tr><td>Aggregation functions</td><td><code>https://schema.agtp.org/aggregation#TrustWeightedAverage</code></td></tr>
+<tr><td>Tree constructions</td><td><code>rfc6962</code></td></tr>
+<tr><td>Hashing identifiers</td><td><code>rdfc-1.0+sha2-256</code>; legacy alias <code>URDNA2015+multihash</code></td></tr>
+<tr><td>Problem types</td><td><code>nonce-invalid</code>, <code>malformed</code>, <code>unauthenticated</code>, <code>not-admitted</code>, <code>dimension-not-accepted</code>, <code>duplicate-delivery</code>, <code>too-large</code>, <code>proof-invalid</code>, <code>issuer-unresolvable</code>, <code>status-revoked</code>, <code>value-out-of-range</code>, <code>provenance-invalid</code>, <code>space-mismatch</code>, <code>manifest-expired</code>, <code>schema-invalid</code>, <code>rate-limited</code>, <code>degraded</code>, under <code>https://schema.agtp.org/problems/</code></td></tr>
+<tr><td>Provenance parameters</td><td><code>space</code>, <code>interaction</code>, <code>artifact</code>; extensions with reverse-DNS prefixes</td></tr>
+<tr><td>Reserved keys in host protocols</td><td>As listed in <a href="#profile-contract">§12.1</a>; the MCP <code>_meta</code> prefix <code>org.agtp/</code>; the A2A extension URI <code>https://schema.agtp.org/a2a/ext/v1</code></td></tr>
+<tr><td>Capabilities features</td><td><code>metricsFeed</code>, <code>signalIndex</code>, <code>signedReceipts</code>, <code>anchoring</code></td></tr>
+<tr><td>ARD capability tokens</td><td><code>AGTPAgent</code>, <code>AGTPSpace</code>, <code>AGTPCapability</code>, <code>AGTPKnowledge</code>, <code>AGTPSignalIndex</code>, <code>AGTPFeedbackService</code></td></tr>
+<tr><td>OKF concept types</td><td><code>AGTP Dimension</code>, <code>AGTP Space</code></td></tr>
+<tr><td>Reserved names</td><td>The DID method name <code>agtp</code>, reserved for a future method specification</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="changes" class="appendix informative">
+<h2>Changes from AGTP v2</h2>
+<ul>
+<li>Laid out as a standards-track specification with terminology, identifier, data model, core object, conformance and reference sections; the v2 essay is summarised in the Introduction and cited in the informative references.</li>
+<li>Aligned credentials with Verifiable Credentials 2.0, Data Integrity (<code>eddsa-rdfc-2022</code>), Bitstring Status Lists and the <code>application/vc</code> media type, with a compatibility-managed overlap (<a href="#migration">§13.2</a>).</li>
+<li>Introduced the credential family—Interaction Receipt, Capability Descriptor, Anchor Commitment, Delegation and Policy Assertion—and the Observation Record (<a href="#data-model">§4</a>, <a href="#core-objects">§5</a>).</li>
+<li>Added the discovery profile on Agentic Resource Discovery, including DID binding of the trust manifest, the <code>agtp:verified</code> state and the separation of relevance from trust (<a href="#discovery">§7</a>).</li>
+<li>Added the knowledge profile on the Open Knowledge Format, including content-addressed bundles, DID actor forms, attestation state, attested computations as verifiable rewards, and dimension registries as OKF bundles (<a href="#knowledge">§8</a>).</li>
+<li>Extended the HTTP profile with Problem Details errors, signed receipts, status and signal index resources, and TLS and sender-authentication requirements (<a href="#http-profile">§9</a>).</li>
+<li>Specified the MCP, model-runtime API, A2A, A2UI, AGENTS.md and Agent Skills, and ERC-8004 bindings as normative profiles with reserved keys inside each host protocol (<a href="#profiles">§12</a>).</li>
+<li>Added <code>issuerRelationWeights</code> and <code>useConfidence</code> to the reference aggregation and required aggregates to be published with their <code>manifestHash</code>, issuer count and window (<a href="#aggregation">§11</a>).</li>
+<li>Added new conformance classes for capability publishers, knowledge publishers, discovery registries, execution integrators and anchor integrators, and the identified requirements that support them (<a href="#conformance-descriptors">Appendix D</a>).</li>
+<li>Established the registries of <a href="#registries">Appendix F</a> and the IANA considerations of <a href="#iana">Appendix J</a>.</li>
+</ul>
+</section>
+
+<section id="future-work" class="appendix informative">
+<h2>Future Work</h2>
+<ol>
+<li><strong>Verifiable rewards at scale.</strong> Verifier receipts backed by TEE attestations and SNARK-friendly transcripts; dataset-slice commitments; a profile for the ERC-8004 validation registry's zkML and TEE validators.</li>
+<li><strong>Benchmark-from-live.</strong> Rolling benchmarks assembled from production interactions with drift detection, adversarial mining and freeze windows, published as OKF bundles of attested computations.</li>
+<li><strong>Privacy-preserving aggregation.</strong> Threshold and MPC aggregation; differential privacy for public leaderboards; selective disclosure from commitment trees.</li>
+<li><strong>Cross-Space normalisation.</strong> Mapping schemas with uncertainty and provenance for aligning dimension scales between Spaces that reference different registry concepts.</li>
+<li><strong>Discovery of Spaces by fit.</strong> ARD facets that let an agent find the Space whose dimensions and evaluators best match its work, and registries that expose recomputable aggregates.</li>
+<li><strong>Knowledge feedback loops.</strong> Standard subtypes for signals about concepts (accuracy, completeness, freshness) and their use by knowledge catalogs to prioritise re-verification.</li>
+<li><strong>A DID method.</strong> A specification for <code>did:agtp</code>, if implementation experience shows that existing methods leave a gap.</li>
+<li><strong>Conformance and fuzzing.</strong> Fixtures for malformed credentials, nonce reuse, CID tampering, catalog spoofing and injected knowledge; a shared fuzz corpus.</li>
+<li><strong>Anchoring standards.</strong> Profiles for timestamp anchoring, reorganisation handling and audit tooling beyond ERC-8004.</li>
+</ol>
+</section>
+
+<section id="acknowledgements" class="appendix informative">
+<h2>Acknowledgements</h2>
+<p>The editors thank the members of the AGTP Consortium and the Newfoundation community for review of the v2 text and of the convergence drafts that this document consolidates. AGTP stands on the work of the W3C Verifiable Credentials and Decentralized Identifier Working Groups and the Credentials Community Group; the maintainers of the Model Context Protocol and the Agentic AI Foundation; the A2A project; the authors of Agentic Resource Discovery and the Open Knowledge Format; the authors of ERC-8004; the Decentralized Identity Foundation for DIDComm; the IETF for the HTTP, ACME and Problem Details mechanisms this document borrows; and the multiformats community for content addressing. The intellectual lineage of the protocol—from Shannon and Wiener through the network scientists, the cryptographers, the architects of the semantic web and of open ledgers, to the era of experience—is recorded in the informative references.</p>
+</section>
+
+<section id="iana" class="appendix">
+<h2>IANA Considerations</h2>
+<p>This appendix records the registrations that the AGTP Consortium intends to request. Until they are complete, the values below are provisional.</p>
+<dl class="dl-terms">
+<dt>Well-Known URI suffix <code>agtp</code></dt>
+<dd>Registration in the Well-Known URIs registry <cite>[<a href="#bib-rfc8615">RFC8615</a>]</cite>. URI suffix: <code>agtp</code>. Change controller: AGTP Consortium. Specification document: this document, <a href="#http-profile">section 9</a>. Related information: all resources beneath the suffix are defined by the HTTP profile; <code>/.well-known/agtp/feedback</code>, <code>space/</code>, <code>status</code>, <code>capabilities</code>, <code>signals</code> and <code>metrics</code>.</dd>
+<dt>HTTP field name <code>AGTP-Nonce</code></dt>
+<dd>Registration in the Hypertext Transfer Protocol (HTTP) Field Name Registry <cite>[<a href="#bib-rfc9110">RFC9110</a>]</cite>. Status: provisional. Specification: <a href="#http-nonce">section 9.2</a>. <code>Replay-Nonce</code> is already registered by <cite>[<a href="#bib-rfc8555">RFC8555</a>]</cite> and <code>Idempotency-Key</code> by <cite>[<a href="#bib-idempotency-key">IDEMPOTENCY-KEY</a>]</cite>; AGTP reuses both unchanged.</dd>
+<dt>HTTP Preference <code>agtp-signed-receipt</code></dt>
+<dd>Registration in the HTTP Preferences registry established by RFC 7240. Specification: <a href="#receipt">section 5.4</a>.</dd>
+<dt>URI scheme <code>agtp</code></dt>
+<dd>Provisional registration in the Uniform Resource Identifier (URI) Schemes registry under the procedures of RFC 7595. Scheme syntax: <a href="#provenance-uri">section 3.5</a>. The scheme identifies provenance bindings and is not dereferenced as a network locator.</dd>
+<dt>Media types</dt>
+<dd>No new media types are requested. AGTP uses <code>application/vc</code> and <code>application/vp</code> as registered by <cite>[<a href="#bib-vc-data-model">VC-DATA-MODEL-2.0</a>]</cite>, <code>application/problem+json</code> <cite>[<a href="#bib-rfc9457">RFC9457</a>]</cite>, <code>application/did+ld+json</code> and <code>application/did+json</code> <cite>[<a href="#bib-did-core">DID-CORE</a>]</cite>, and <code>application/json</code>.</dd>
+<dt>Other namespaces</dt>
+<dd>The MCP <code>_meta</code> prefix <code>org.agtp/</code>, the A2A extension URI, the ARD <code>agtp</code> context prefix and the OKF <code>agtp</code> frontmatter key are governed by the respective specifications' extension rules and by the registries of <a href="#registries">Appendix F</a>; they involve no IANA action. The DID service types defined by this document will be submitted to the DID Specification Registries <cite>[<a href="#bib-did-spec-registries">DID-SPEC-REGISTRIES</a>]</cite>.</dd>
+</dl>
+</section>
+
+<section id="references" class="appendix">
+<h2>References</h2>
+<section id="normative-references">
+<h3>Normative References</h3>
+<dl class="bib">
+<dt id="bib-ard">[ARD]</dt><dd>Junjie Bu, R.V. Guha, Shaun Smith. <a href="https://agenticresourcediscovery.org/spec/">Agentic Resource Discovery Specification</a>. Version 0.91, Proposal, 26 August 2026. Repository: <a href="https://github.com/ards-project/ard-spec">github.com/ards-project/ard-spec</a>.</dd>
+<dt id="bib-caip-2">[CAIP-2]</dt><dd>Chain Agnostic Standards Alliance. <a href="https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md">CAIP-2: Blockchain ID Specification</a>.</dd>
+<dt id="bib-caip-10">[CAIP-10]</dt><dd>Chain Agnostic Standards Alliance. <a href="https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md">CAIP-10: Account ID Specification</a>.</dd>
+<dt id="bib-cid">[CID]</dt><dd>Multiformats. <a href="https://github.com/multiformats/cid">CID (Content IDentifier) Specification</a>.</dd>
+<dt id="bib-cid-1.0">[CONTROLLED-IDENTIFIERS]</dt><dd>W3C. <a href="https://www.w3.org/TR/cid-1.0/">Controlled Identifiers v1.0</a>. W3C Recommendation.</dd>
+<dt id="bib-did-core">[DID-CORE]</dt><dd>W3C. <a href="https://www.w3.org/TR/did-core/">Decentralized Identifiers (DIDs) v1.0</a>. W3C Recommendation, 19 July 2022.</dd>
+<dt id="bib-idempotency-key">[IDEMPOTENCY-KEY]</dt><dd>IETF HTTPAPI Working Group. <a href="https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/">The Idempotency-Key HTTP Header Field</a>. Internet-Draft.</dd>
+<dt id="bib-json-ld11">[JSON-LD11]</dt><dd>W3C. <a href="https://www.w3.org/TR/json-ld11/">JSON-LD 1.1</a>. W3C Recommendation, 16 July 2020.</dd>
+<dt id="bib-json-schema">[JSON-SCHEMA]</dt><dd>JSON Schema. <a href="https://json-schema.org/specification">JSON Schema 2020-12</a>.</dd>
+<dt id="bib-mcp">[MCP]</dt><dd>MCP Core Maintainers. <a href="https://modelcontextprotocol.io/specification/2025-11-25">Model Context Protocol Specification</a>, revision 2025-11-25; and <a href="https://modelcontextprotocol.io/specification/2025-06-18">revision 2025-06-18</a>.</dd>
+<dt id="bib-multibase">[MULTIBASE]</dt><dd>Multiformats. <a href="https://datatracker.ietf.org/doc/draft-multiformats-multibase/">The Multibase Data Format</a>. Internet-Draft.</dd>
+<dt id="bib-multihash">[MULTIHASH]</dt><dd>Multiformats. <a href="https://datatracker.ietf.org/doc/draft-multiformats-multihash/">The Multihash Data Format</a>. Internet-Draft.</dd>
+<dt id="bib-okf">[OKF]</dt><dd>Google Cloud. <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf">Open Knowledge Format Specification</a>. Version 0.2, 25 July 2026.</dd>
+<dt id="bib-openapi">[OPENAPI]</dt><dd>OpenAPI Initiative. <a href="https://spec.openapis.org/oas/v3.1.0">OpenAPI Specification v3.1.0</a>.</dd>
+<dt id="bib-rdf-canon">[RDF-CANON]</dt><dd>W3C. <a href="https://www.w3.org/TR/rdf-canon/">RDF Dataset Canonicalization</a>. W3C Recommendation, 21 May 2025.</dd>
+<dt id="bib-rfc2119">[RFC2119]</dt><dd>S. Bradner. <a href="https://www.rfc-editor.org/rfc/rfc2119">Key words for use in RFCs to Indicate Requirement Levels</a>. BCP 14, RFC 2119, March 1997.</dd>
+<dt id="bib-rfc3339">[RFC3339]</dt><dd>G. Klyne, C. Newman. <a href="https://www.rfc-editor.org/rfc/rfc3339">Date and Time on the Internet: Timestamps</a>. RFC 3339, July 2002.</dd>
+<dt id="bib-rfc3986">[RFC3986]</dt><dd>T. Berners-Lee, R. Fielding, L. Masinter. <a href="https://www.rfc-editor.org/rfc/rfc3986">Uniform Resource Identifier (URI): Generic Syntax</a>. STD 66, RFC 3986, January 2005.</dd>
+<dt id="bib-rfc5234">[RFC5234]</dt><dd>D. Crocker, P. Overell. <a href="https://www.rfc-editor.org/rfc/rfc5234">Augmented BNF for Syntax Specifications: ABNF</a>. STD 68, RFC 5234, January 2008.</dd>
+<dt id="bib-rfc6962">[RFC6962]</dt><dd>B. Laurie, A. Langley, E. Kasper. <a href="https://www.rfc-editor.org/rfc/rfc6962">Certificate Transparency</a>. RFC 6962, June 2013.</dd>
+<dt id="bib-rfc8174">[RFC8174]</dt><dd>B. Leiba. <a href="https://www.rfc-editor.org/rfc/rfc8174">Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</a>. BCP 14, RFC 8174, May 2017.</dd>
+<dt id="bib-rfc8259">[RFC8259]</dt><dd>T. Bray. <a href="https://www.rfc-editor.org/rfc/rfc8259">The JavaScript Object Notation (JSON) Data Interchange Format</a>. STD 90, RFC 8259, December 2017.</dd>
+<dt id="bib-rfc8555">[RFC8555]</dt><dd>R. Barnes, J. Hoffman-Andrews, D. McCarney, J. Kasten. <a href="https://www.rfc-editor.org/rfc/rfc8555">Automatic Certificate Management Environment (ACME)</a>. RFC 8555, March 2019.</dd>
+<dt id="bib-rfc8615">[RFC8615]</dt><dd>M. Nottingham. <a href="https://www.rfc-editor.org/rfc/rfc8615">Well-Known Uniform Resource Identifiers (URIs)</a>. RFC 8615, May 2019.</dd>
+<dt id="bib-rfc9110">[RFC9110]</dt><dd>R. Fielding, M. Nottingham, J. Reschke. <a href="https://www.rfc-editor.org/rfc/rfc9110">HTTP Semantics</a>. STD 97, RFC 9110, June 2022.</dd>
+<dt id="bib-rfc9111">[RFC9111]</dt><dd>R. Fielding, M. Nottingham, J. Reschke. <a href="https://www.rfc-editor.org/rfc/rfc9111">HTTP Caching</a>. STD 98, RFC 9111, June 2022.</dd>
+<dt id="bib-rfc9421">[RFC9421]</dt><dd>A. Backman, J. Richer, M. Sporny. <a href="https://www.rfc-editor.org/rfc/rfc9421">HTTP Message Signatures</a>. RFC 9421, February 2024.</dd>
+<dt id="bib-rfc9457">[RFC9457]</dt><dd>M. Nottingham, E. Wilde, S. Dalal. <a href="https://www.rfc-editor.org/rfc/rfc9457">Problem Details for HTTP APIs</a>. RFC 9457, July 2023.</dd>
+<dt id="bib-rfc9562">[RFC9562]</dt><dd>K. Davis, B. Peabody, P. Leach. <a href="https://www.rfc-editor.org/rfc/rfc9562">Universally Unique IDentifiers (UUIDs)</a>. RFC 9562, May 2024.</dd>
+<dt id="bib-vc-bitstring-status-list">[VC-BITSTRING-STATUS-LIST]</dt><dd>W3C. <a href="https://www.w3.org/TR/vc-bitstring-status-list/">Bitstring Status List v1.0</a>. W3C Recommendation, 15 May 2025.</dd>
+<dt id="bib-vc-data-integrity">[VC-DATA-INTEGRITY]</dt><dd>W3C. <a href="https://www.w3.org/TR/vc-data-integrity/">Verifiable Credential Data Integrity 1.0</a>. W3C Recommendation, 15 May 2025.</dd>
+<dt id="bib-vc-data-model">[VC-DATA-MODEL-2.0]</dt><dd>W3C. <a href="https://www.w3.org/TR/vc-data-model-2.0/">Verifiable Credentials Data Model v2.0</a>. W3C Recommendation, 15 May 2025.</dd>
+<dt id="bib-vc-di-eddsa">[VC-DI-EDDSA]</dt><dd>W3C. <a href="https://www.w3.org/TR/vc-di-eddsa/">Data Integrity EdDSA Cryptosuites v1.0</a>. W3C Recommendation, 15 May 2025.</dd>
+<dt id="bib-vc-json-schema">[VC-JSON-SCHEMA]</dt><dd>W3C. <a href="https://www.w3.org/TR/vc-json-schema/">Verifiable Credentials JSON Schema Specification</a>.</dd>
+</dl>
+</section>
+<section id="informative-references">
+<h3>Informative References</h3>
+<dl class="bib">
+<dt id="bib-a2a">[A2A]</dt><dd>A2A Project (Linux Foundation). <a href="https://a2a-protocol.org/latest/specification/">Agent2Agent (A2A) Protocol Specification</a>, version 1.0.</dd>
+<dt id="bib-a2ui">[A2UI]</dt><dd>A2UI Project. <a href="https://a2ui.org/specification/v0.8-a2ui/">A2UI Specification v0.8</a>; <a href="https://a2ui.org/specification/v0.9-a2ui/">v0.9 (draft)</a>.</dd>
+<dt id="bib-aaif">[AAIF]</dt><dd>Linux Foundation. <a href="https://aaif.io/">Agentic AI Foundation</a>.</dd>
+<dt id="bib-agent-skills">[AGENT-SKILLS]</dt><dd>Agent Skills. <a href="https://agentskills.io/specification">Agent Skills Specification</a>.</dd>
+<dt id="bib-agents-md">[AGENTS-MD]</dt><dd><a href="https://agents.md/">AGENTS.md: A simple, open format for guiding coding agents</a>.</dd>
+<dt id="bib-agtp-v2">[AGTP-V2]</dt><dd>Newfoundation. <a href="https://github.com/new-foundation/agtp">Agent Graph Trust Protocol (AGTP) v2</a>. Specification text, 24 February 2026.</dd>
+<dt id="bib-did-key">[DID-KEY]</dt><dd>W3C Credentials Community Group. <a href="https://w3c-ccg.github.io/did-key-spec/">The did:key Method</a>.</dd>
+<dt id="bib-did-pkh">[DID-PKH]</dt><dd>W3C Credentials Community Group. <a href="https://github.com/w3c-ccg/did-pkh/blob/main/did-pkh-method-draft.md">did:pkh Method Specification</a>.</dd>
+<dt id="bib-did-resolution">[DID-RESOLUTION]</dt><dd>W3C. <a href="https://www.w3.org/TR/did-resolution/">Decentralized Identifier Resolution (DID Resolution) v1.0</a>.</dd>
+<dt id="bib-did-spec-registries">[DID-SPEC-REGISTRIES]</dt><dd>W3C. <a href="https://www.w3.org/TR/did-extensions/">DID Extensions</a> (DID Specification Registries).</dd>
+<dt id="bib-did-web">[DID-WEB]</dt><dd>W3C Credentials Community Group. <a href="https://w3c-ccg.github.io/did-method-web/">did:web Method Specification</a>.</dd>
+<dt id="bib-did-webvh">[DID-WEBVH]</dt><dd>Decentralized Identity Foundation. <a href="https://identity.foundation/didwebvh/">The did:webvh DID Method</a>.</dd>
+<dt id="bib-didcomm-v2">[DIDCOMM-V2]</dt><dd>Decentralized Identity Foundation. <a href="https://identity.foundation/didcomm-messaging/spec/">DIDComm Messaging v2</a>.</dd>
+<dt id="bib-erc-8004">[ERC-8004]</dt><dd>Ethereum Improvement Proposals. <a href="https://eips.ethereum.org/EIPS/eip-8004">ERC-8004: Trustless Agents</a>.</dd>
+<dt id="bib-ipfs-content-addressing">[IPFS-CONTENT-ADDRESSING]</dt><dd>IPFS. <a href="https://docs.ipfs.tech/concepts/content-addressing/">Content addressing and CIDs</a>.</dd>
+<dt id="bib-json-rpc">[JSON-RPC]</dt><dd><a href="https://www.jsonrpc.org/specification">JSON-RPC 2.0 Specification</a>.</dd>
+<dt id="bib-openai-api">[OPENAI-API]</dt><dd>OpenAI. <a href="https://platform.openai.com/docs/api-reference">OpenAI API Reference</a>; <a href="https://platform.openai.com/docs/guides/function-calling">Function calling</a>.</dd>
+<dt id="bib-rfc2104">[RFC2104]</dt><dd>H. Krawczyk, M. Bellare, R. Canetti. <a href="https://www.rfc-editor.org/rfc/rfc2104">HMAC: Keyed-Hashing for Message Authentication</a>. RFC 2104, February 1997.</dd>
+<dt id="bib-synergy">[SYNERGY]</dt><dd>Newfoundation. <em>Synergy Is All We Need</em>. Foundation paper, 2024.</dd>
+<dt id="bib-vc-data-model-1">[VC-DATA-MODEL-1.0]</dt><dd>W3C. <a href="https://www.w3.org/TR/2019/REC-vc-data-model-20191119/">Verifiable Credentials Data Model 1.0</a>. W3C Recommendation, 19 November 2019.</dd>
+</dl>
+<h4 id="research-lineage">Research lineage</h4>
+<p>The following works, published as the AGTP research bibliography, record the ideas the protocol builds on, from the era of experience back to the foundations of information theory.</p>
+<dl class="bib">
+<dt id="bib-silver-sutton">[SILVER-SUTTON-2025]</dt><dd>David Silver, Richard S. Sutton. <a href="https://storage.googleapis.com/deepmind-media/Era-of-Experience%20/The%20Era%20of%20Experience%20Paper.pdf">Welcome to the Era of Experience</a>. 2025.</dd>
+<dt id="bib-rsa">[RSA-1978]</dt><dd>R. L. Rivest, A. Shamir, L. Adleman. <a href="https://people.csail.mit.edu/rivest/Rsapaper.pdf">A Method for Obtaining Digital Signatures and Public-Key Cryptosystems</a>. Communications of the ACM 21(2), 1978.</dd>
+<dt id="bib-hmac">[HMAC-1996]</dt><dd>H. Krawczyk, R. Canetti, M. Bellare. HMAC: Keyed-Hashing for Message Authentication. See <cite>[<a href="#bib-rfc2104">RFC2104</a>]</cite>.</dd>
+<dt id="bib-granovetter">[GRANOVETTER-1973]</dt><dd>Mark S. Granovetter. <a href="https://doi.org/10.1086/225469">The Strength of Weak Ties</a>. American Journal of Sociology 78(6), 1973.</dd>
+<dt id="bib-resnick">[RESNICK-ZECKHAUSER-2002]</dt><dd>Paul Resnick, Richard Zeckhauser. <a href="https://doi.org/10.1016/S0278-0984(02)11030-3">Trust Among Strangers in Internet Transactions: Empirical Analysis of eBay's Reputation System</a>. 2002.</dd>
+<dt id="bib-semantic-web">[SEMANTIC-WEB-2001]</dt><dd>Tim Berners-Lee, James Hendler, Ora Lassila. <a href="https://www.scientificamerican.com/article/the-semantic-web/">The Semantic Web</a>. Scientific American, May 2001.</dd>
+<dt id="bib-sabater">[SABATER-SIERRA-2005]</dt><dd>Jordi Sabater, Carles Sierra. <a href="https://doi.org/10.1007/s10462-004-0041-5">Review on Computational Trust and Reputation Models</a>. Artificial Intelligence Review 24, 2005.</dd>
+<dt id="bib-ethereum">[BUTERIN-2014]</dt><dd>Vitalik Buterin. <a href="https://ethereum.org/en/whitepaper/">A Next-Generation Smart Contract and Decentralized Application Platform</a>. 2014.</dd>
+<dt id="bib-bitcoin">[NAKAMOTO-2008]</dt><dd>Satoshi Nakamoto. <a href="https://bitcoin.org/bitcoin.pdf">Bitcoin: A Peer-to-Peer Electronic Cash System</a>. 2008.</dd>
+<dt id="bib-deep-learning">[GOODFELLOW-2016]</dt><dd>Ian Goodfellow, Yoshua Bengio, Aaron Courville. <a href="https://www.deeplearningbook.org/">Deep Learning</a>. MIT Press, 2016.</dd>
+<dt id="bib-linked">[BARABASI-2002]</dt><dd>Albert-László Barabási. <em>Linked: The New Science of Networks</em>. Perseus, 2002.</dd>
+<dt id="bib-watts-strogatz">[WATTS-STROGATZ-1998]</dt><dd>Duncan J. Watts, Steven H. Strogatz. <a href="https://doi.org/10.1038/30918">Collective Dynamics of 'Small-World' Networks</a>. Nature 393, 1998.</dd>
+<dt id="bib-barabasi-albert">[BARABASI-ALBERT-1999]</dt><dd>Albert-László Barabási, Réka Albert. <a href="https://doi.org/10.1126/science.286.5439.509">Emergence of Scaling in Random Networks</a>. Science 286, 1999.</dd>
+<dt id="bib-newman">[NEWMAN-2003]</dt><dd>M. E. J. Newman. <a href="https://doi.org/10.1137/S003614450342480">The Structure and Function of Complex Networks</a>. SIAM Review 45(2), 2003.</dd>
+<dt id="bib-wiener">[WIENER-1948]</dt><dd>Norbert Wiener. <em>Cybernetics: Or Control and Communication in the Animal and the Machine</em>. MIT Press, 1948.</dd>
+<dt id="bib-shannon">[SHANNON-1948]</dt><dd>Claude E. Shannon. <a href="https://doi.org/10.1002/j.1538-7305.1948.tb01338.x">A Mathematical Theory of Communication</a>. Bell System Technical Journal 27, 1948.</dd>
+</dl>
+</section>
+</section>
+</main>

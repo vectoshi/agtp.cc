@@ -1,0 +1,82 @@
+<section id="identifiers">
+<h2>Identifiers</h2>
+<p>AGTP names four kinds of things: agents and Spaces, artifacts, interactions and dimensions. Each has an identifier scheme borrowed from an existing standard. The one identifier AGTP defines itself, the provenance URI, exists only to bind the other three together.</p>
+
+<section id="agent-space-identifiers">
+<h3>Agent and Space Identifiers</h3>
+<p>Agents and Spaces MUST be identified by Decentralized Identifiers conforming to <cite>[<a href="#bib-did-core">DID-CORE</a>]</cite>. Every DID used in an AGTP object MUST be resolvable, by its method's resolution process, to a DID Document. Consumers MUST resolve DIDs before relying on any claim signed by them and MUST fail closed when resolution fails.</p>
+<p>AGTP is DID-method agnostic. A DID method used with AGTP MUST, however, satisfy the following requirements:</p>
+<ol>
+<li>The DID Document MUST support <code>service</code> entries as defined in <cite>[<a href="#bib-did-core">DID-CORE</a>]</cite> §5.4, because feedback services and manifests are discovered through them.</li>
+<li>The DID Document MUST support at least one <a class="term" href="#dfn-verification-method">verification method</a> listed under the <code>assertionMethod</code> relationship whose key type is usable with a cryptosuite of <a href="#crypto">section 10</a>.</li>
+<li>The method SHOULD support rotating verification methods without changing the DID, so that long-lived signals survive key rotation.</li>
+<li>The method SHOULD support deactivation, and consumers MUST treat signals issued after a deactivation as invalid.</li>
+<li>The method MAY provide a verifiable history of DID Document versions. Where it does, verifiers SHOULD check that the verification method referenced by a proof was valid at the proof's <code>created</code> time.</li>
+</ol>
+<div class="note">
+<span class="marker">Note: Choosing a DID method</span>
+<p>In deployments to date, organisations and Spaces use <code>did:web</code> <cite>[<a href="#bib-did-web">DID-WEB</a>]</cite>, whose domain binding also satisfies the ARD identity check of <a href="#discovery-verifying">section 7.2</a> without extra machinery; device-bound or short-lived agents use <code>did:key</code> <cite>[<a href="#bib-did-key">DID-KEY</a>]</cite>; parties that need an auditable key history use <code>did:webvh</code> <cite>[<a href="#bib-did-webvh">DID-WEBVH</a>]</cite>; and agents registered in ERC-8004 often use <code>did:pkh</code> <cite>[<a href="#bib-did-pkh">DID-PKH</a>]</cite> so that the registering wallet and the signing identity coincide. The method name <code>agtp</code> is reserved in <a href="#registries">Appendix F</a> for a future method specification and is not defined by this document.</p>
+</div>
+<p>A Space MUST be identified by a DID, and its Space Manifest MUST be issued by that DID. A Space's DID Document MUST advertise a service of type <code>AGTPSpaceManifest</code> whose endpoint serves the current manifest under the HTTP profile, and SHOULD advertise an <code>AGTPFeedbackService</code> so that signals can be delivered to the Space for aggregation as well as to their subjects.</p>
+<p>A participant that does not natively hold a DID—an API client, a browser session, an A2A agent whose card carries no DID—MAY be represented by a <a class="term" href="#dfn-gateway-identity">gateway identity</a>. The gateway MUST record the mapping between the upstream identifier and the DID either in its own DID Document or in a delegation credential referenced from the objects it issues, and signals issued through a gateway SHOULD carry the upstream identifier in the observation record's <code>sourceRefs</code> so that the delegation can be audited.</p>
+<p>Where an AGTP identity is also bound to a domain—for ARD publication, for <code>did:web</code>, or for A2A and MCP endpoints—the DID Document SHOULD carry the domain's origin in <code>alsoKnownAs</code>, and the domain SHOULD publish the DID in its ARD entries (<a href="#discovery">section 7</a>). Either link alone is a claim; both together are a mutual binding that verifiers can check.</p>
+</section>
+
+<section id="artifact-identifiers">
+<h3>Artifact Identifiers</h3>
+<p>Artifacts SHOULD be identified by content: a CIDv1 <cite>[<a href="#bib-cid">CID</a>]</cite> in a multibase encoding <cite>[<a href="#bib-multibase">MULTIBASE</a>]</cite>. Producers MUST use a multihash <cite>[<a href="#bib-multihash">MULTIHASH</a>]</cite> function that consumers can compute; <code>sha2-256</code> is the baseline that all implementations MUST support. The <code>raw</code> codec is RECOMMENDED for opaque bytes, <code>dag-pb</code> for directory trees such as OKF bundles, and <code>dag-cbor</code> or <code>dag-json</code> for structured data. Base32 lower-case encoding (the familiar <code>bafy…</code> form) is RECOMMENDED because it is safe in URIs, file names and case-insensitive contexts.</p>
+<p>When an artifact is referenced from a structured object rather than from a provenance URI, the reference is an <dfn id="dfn-artifact-reference">artifact reference</dfn>: an object with a <code>cid</code>, an optional dereferenceable <code>uri</code>, an optional <code>role</code> (for example <code>input</code>, <code>output</code>, <code>trace</code>, <code>schema</code>, <code>policy</code>, <code>knowledge</code>, <code>computation</code>, <code>receipt</code>) and an optional <code>mediaType</code>. The CID is authoritative; the URI is a hint.</p>
+<p>Content addressing does not require publication. A private artifact still has a CID, and a signal may bind to it so that the subject, the issuer and any auditor they admit can confirm what was evaluated. Where disclosure is sensitive, publishers SHOULD publish a redacted artifact alongside a statement that binds the redacted and the original CIDs; the form of that statement is a Space policy matter.</p>
+</section>
+
+<section id="interaction-identifiers">
+<h3>Interaction Identifiers</h3>
+<p>An interaction identifier MUST be unique within its Space and SHOULD be a URI. A UUID URN <cite>[<a href="#bib-rfc9562">RFC9562</a>]</cite> is RECOMMENDED. When an interaction is derived from an upstream protocol object—an A2A task, an MCP tool call, a model-API response, an A2UI session—the binding profile preserves the upstream identifier in <code>sourceRefs</code>, and implementations SHOULD derive the interaction identifier deterministically from it, for example as a name-based UUID (version 5) over a namespace the profile designates, so that independent integrators observing the same upstream object arrive at the same interaction identifier.</p>
+</section>
+
+<section id="dimension-identifiers">
+<h3>Dimension Identifiers</h3>
+<p>A dimension identifier is a case-sensitive string of one or more characters from the set <code>ALPHA / DIGIT / "_" / "-" / "."</code>. It MUST be unique within the Space that declares it. The semantics of a dimension are the Space's, unless the Space's manifest binds the identifier to a URI in <code>dimensionRefs</code>, in which case the referenced definition governs. Such URIs SHOULD dereference to an OKF concept of type <code>AGTP Dimension</code> as described in <a href="#knowledge-dimensions">section 8.4</a>, so that the definition carries its own provenance, status and staleness.</p>
+</section>
+
+<section id="provenance-uri">
+<h3>AGTP Provenance URI</h3>
+<p>Every Learning Signal binds to a <a class="term" href="#dfn-provenance-uri">provenance URI</a> that identifies the Space in which an evaluation took place, the interaction that was evaluated and the artifacts needed to reproduce or audit it.</p>
+<figure id="fig-provenance-uri">
+<!--FIG:fig-provenance.svg-->
+<figcaption>The provenance URI has a fixed scheme and resource, two required parameters and one recommended list parameter; extension parameters may follow.</figcaption>
+</figure>
+<p>The syntax is defined by the following ABNF <cite>[<a href="#bib-rfc5234">RFC5234</a>]</cite>, where <code>URI</code>, <code>unreserved</code> and <code>pct-encoded</code> are as defined in <cite>[<a href="#bib-rfc3986">RFC3986</a>]</cite>:</p>
+<pre><code>agtp-uri          = "agtp://" "provenance" "?" agtp-param *( "&amp;" agtp-param )
+agtp-param        = space-param / interaction-param / artifact-param / ext-param
+
+space-param       = "space=" space-value
+space-value       = URI                  ; an absolute URI or a DID
+interaction-param = "interaction=" 1*( unreserved / pct-encoded / ":" )
+artifact-param    = "artifact=" cid *( "," cid )
+cid               = 1*( ALPHA / DIGIT )  ; a multibase-encoded CIDv1
+ext-param         = pname "=" pvalue
+pname             = 1*( ALPHA / DIGIT / "_" / "-" / "." )
+pvalue            = *( unreserved / pct-encoded / ":" / "," )</code></pre>
+<p>The following requirements apply to producers and consumers of provenance URIs:</p>
+<ol>
+<li>A provenance URI MUST include exactly one <code>space</code> parameter and exactly one <code>interaction</code> parameter, and SHOULD include at least one <code>artifact</code> parameter. The <code>space</code> value MUST equal the signal's <code>space</code>.</li>
+<li>Characters outside the productions above MUST be percent-encoded. The characters <code>&amp;</code>, <code>=</code> and <code>,</code> MUST be percent-encoded when they occur inside a value.</li>
+<li>Producers SHOULD emit parameters in the order <code>space</code>, <code>interaction</code>, <code>artifact</code>, then extension parameters in code-point order of their names, and SHOULD emit artifact CIDs in code-point order. Consumers MUST compare provenance URIs after applying this ordering and percent-encoding normalisation, so that equivalent URIs compare equal.</li>
+<li>Consumers MUST ignore extension parameters they do not understand. Extension parameter names SHOULD be registered in the AGTP parameter registry (<a href="#registries">Appendix F</a>) or namespaced with a reverse-DNS prefix ending in a dot.</li>
+<li>A provenance URI is not dereferenced as a network resource. Each component is resolved separately: the Space to its manifest, the interaction to its observation records through the Space's or the subject's <code>AGTPSignalIndex</code> (<a href="#http-signal-index">section 9.7</a>), and each artifact through any content-addressed retrieval path the consumer supports.</li>
+</ol>
+<div class="example" data-title="A provenance URI binding a test case and an output">
+<pre><code>agtp://provenance?space=did:web:rlvr.example
+    &amp;interaction=urn:uuid:3b4f0d2c-6a1e-4f7b-9c1d-2e8a5b7f9d10
+    &amp;artifact=bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi,bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku
+    &amp;org.example.suite=math-500</code></pre>
+<p>Line breaks are shown for readability only. The first CID identifies the test case, the second the output that was evaluated; the extension parameter names the benchmark suite in a namespace the Space understands.</p>
+</div>
+</section>
+
+<section id="discovery-identifiers">
+<h3>Discovery Identifiers</h3>
+<p>Resources published for discovery are identified by ARD entry identifiers: URNs of the form <code>urn:air:&lt;publisher&gt;:&lt;namespace&gt;:&lt;name&gt;</code> as defined in <cite>[<a href="#bib-ard">ARD</a>]</cite>, where the publisher segment is the publishing domain. AGTP objects reference an entry through the <code>discovery.ard</code> property of a Capability Descriptor or Space Manifest. A capability identifier MAY be the ARD identifier of its entry, and SHOULD be when the capability is published through ARD, so that discovery, description and evaluation share one name. The publisher segment MUST be consistent with the DID that signs the corresponding AGTP objects, as specified in <a href="#discovery-verifying">section 7.2</a>.</p>
+</section>
+</section>

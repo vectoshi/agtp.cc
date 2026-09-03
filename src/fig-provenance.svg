@@ -1,0 +1,18 @@
+<svg viewBox="0 0 860 190" role="img" aria-label="Anatomy of an AGTP provenance URI: the agtp scheme, the provenance resource, a required space parameter, a required interaction parameter and a recommended comma-separated artifact parameter" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="12">
+<text x="20" y="60" font-family="IBM Plex Mono, Menlo, Consolas, monospace" font-size="13" fill="currentColor" textLength="820" lengthAdjust="spacingAndGlyphs" xml:space="preserve">agtp://provenance?space=did:web:rlvr.example&amp;interaction=urn:uuid:3b4f0d2c&amp;artifact=bafybeigd…,bafybeihd…</text>
+<path d="M21.0 78 v6 H73.7 v-6" fill="none" stroke="currentColor" stroke-width="1.3" ></path>
+<line x1="47.3" y1="84" x2="47.3" y2="96" stroke="currentColor" stroke-width="1.3" ></line>
+<text x="47.3" y="110" text-anchor="middle" fill="currentColor">scheme</text>
+<path d="M75.7 118 v6 H151.8 v-6" fill="none" stroke="currentColor" stroke-width="1.3" ></path>
+<line x1="113.7" y1="124" x2="113.7" y2="136" stroke="currentColor" stroke-width="1.3" ></line>
+<text x="113.7" y="150" text-anchor="middle" fill="currentColor">resource</text>
+<path d="M161.6 78 v6 H362.6 v-6" fill="none" stroke="currentColor" stroke-width="1.3" class="fig-accent"></path>
+<line x1="262.1" y1="84" x2="262.1" y2="96" stroke="currentColor" stroke-width="1.3" class="fig-accent"></line>
+<text x="262.1" y="110" text-anchor="middle" fill="currentColor">space (DID or URI) — required</text>
+<path d="M372.4 118 v6 H596.9 v-6" fill="none" stroke="currentColor" stroke-width="1.3" class="fig-accent"></path>
+<line x1="484.7" y1="124" x2="484.7" y2="136" stroke="currentColor" stroke-width="1.3" class="fig-accent"></line>
+<text x="484.7" y="150" text-anchor="middle" fill="currentColor">interaction id — required</text>
+<path d="M606.7 78 v6 H839.0 v-6" fill="none" stroke="currentColor" stroke-width="1.3" ></path>
+<line x1="722.9" y1="84" x2="722.9" y2="96" stroke="currentColor" stroke-width="1.3" ></line>
+<text x="840.0" y="110" text-anchor="end" fill="currentColor">artifact CIDs, comma-separated — recommended</text>
+</svg>

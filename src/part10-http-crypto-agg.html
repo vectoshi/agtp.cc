@@ -1,0 +1,172 @@
+<section id="http-profile">
+<h2>HTTP Interoperability Profile</h2>
+<p>The HTTP profile is mandatory: every conformance class that sends or receives signals implements it, and any other transport profile is in addition to it. The profile identifier is <code>http/1.1</code>; <code>http/1.0</code> identifies the AGTP v2 subset, which omits the optional resources of <a href="#http-status">sections 9.5</a> and <a href="#http-signal-index">9.7</a> and the Problem Details error format. All resources live under the well-known prefix <code>/.well-known/agtp/</code> <cite>[<a href="#bib-rfc8615">RFC8615</a>]</cite> and MUST be served over TLS. The OpenAPI description is in <a href="#openapi">Appendix C</a>.</p>
+
+<section id="http-feedback">
+<h3>The Feedback Resource</h3>
+<p>The feedback resource is <code>/.well-known/agtp/feedback</code> on the origin advertised by the <code>AGTPFeedbackService</code> service. It supports two methods.</p>
+<p><strong>HEAD</strong> returns <code>200</code> with a <code>Replay-Nonce</code> response header carrying a fresh nonce, and MAY return <code>Cache-Control: no-store</code>. The response has no body.</p>
+<p><strong>POST</strong> accepts one Learning Signal in the request body with <code>Content-Type: application/vc</code> (or a legacy media type of <a href="#representations">section 4.5</a>). The request MUST carry the <code>AGTP-Nonce</code> and <code>Idempotency-Key</code> header fields of <a href="#http-nonce">section 9.2</a>, and MAY carry <code>Prefer: agtp-signed-receipt</code>. The response is a receipt (<a href="#receipt">section 5.4</a>) as <code>application/json</code>, or a signed Interaction Receipt as <code>application/vc</code> when one was requested and the receiver supports it, with the status codes of <a href="#http-errors">section 9.3</a>. Receivers MUST accept bodies of at least 64 KiB and MAY reject larger ones with <code>413</code>.</p>
+<p>Authentication of the sender is REQUIRED and its mechanism is a policy matter; receivers SHOULD accept at least one of HTTP Message Signatures bound to the sender's DID key <cite>[<a href="#bib-rfc9421">RFC9421</a>]</cite>, mutual TLS, or OAuth 2.1 bearer tokens as used by MCP. The signal's own proof authenticates the issuer of the claim; sender authentication only gates the endpoint.</p>
+</section>
+
+<section id="http-nonce">
+<h3>Nonces and Idempotency</h3>
+<p>Replay and duplicate protection follow two established patterns: the <code>Replay-Nonce</code> mechanism of ACME <cite>[<a href="#bib-rfc8555">RFC8555</a>]</cite> and the <code>Idempotency-Key</code> header of <cite>[<a href="#bib-idempotency-key">IDEMPOTENCY-KEY</a>]</cite>.</p>
+<ol>
+<li>A nonce is an opaque string of at least 128 bits of entropy, base64url-encoded, valid for a single POST. Receivers MUST issue a nonce on every HEAD and SHOULD keep it valid for at least five minutes. Every successful or failed POST consumes the nonce it carried, and every response to a POST SHOULD include a fresh <code>Replay-Nonce</code> so that senders need not issue another HEAD.</li>
+<li>A POST without <code>AGTP-Nonce</code>, or with a nonce that is unknown, expired or already consumed, MUST be rejected with <code>400</code> and the problem type <code>nonce-invalid</code>, and the response MUST carry a fresh <code>Replay-Nonce</code>.</li>
+<li>The <code>Idempotency-Key</code> is a sender-generated UUID <cite>[<a href="#bib-rfc9562">RFC9562</a>]</cite>. A sender MUST use the same key for every retry of the same signal to the same receiver and SHOULD use the same key when delivering the same signal to the subject and to the Space. Receivers MUST remember keys for at least 24 hours and MUST respond to a repeated key from the same authenticated sender with <code>409</code>, the problem type <code>duplicate-delivery</code> and the original receipt in the problem's <code>receipt</code> member, without processing the body again.</li>
+<li>Independently of the key, receivers MUST deduplicate by <code>signalHash</code>: a signal whose hash was already accepted MUST be answered with <code>200</code> and the existing receipt.</li>
+</ol>
+</section>
+
+<section id="http-errors">
+<h3>Status Codes and Errors</h3>
+<p>Error responses use Problem Details for HTTP APIs <cite>[<a href="#bib-rfc9457">RFC9457</a>]</cite> with <code>Content-Type: application/problem+json</code>. The <code>type</code> member is a URI under <code>https://schema.agtp.org/problems/</code>; the following types and codes are defined. A receipt with <code>acceptState: rejected</code> uses the same URIs in its <code>reason</code>.</p>
+<div class="table-wrap">
+<table>
+<caption>HTTP status codes and problem types for the feedback resource</caption>
+<thead><tr><th>Status</th><th>Problem type (suffix)</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="num">200</td><td>—</td><td>Signal accepted; receipt returned. Also returned for a signal already accepted with the same <code>signalHash</code>.</td></tr>
+<tr><td class="num">202</td><td>—</td><td>Signal received, validation pending; receipt with <code>acceptState: pending</code> and a <code>Retry-After</code> header.</td></tr>
+<tr><td class="num">400</td><td><code>nonce-invalid</code>, <code>malformed</code></td><td>Missing or consumed nonce; unparseable body or headers.</td></tr>
+<tr><td class="num">401</td><td><code>unauthenticated</code></td><td>Sender authentication absent or invalid.</td></tr>
+<tr><td class="num">403</td><td><code>not-admitted</code></td><td>Sender authenticated but not admitted by the receiver's or the Space's policy.</td></tr>
+<tr><td class="num">406</td><td><code>dimension-not-accepted</code></td><td>A dimension in the signal is not declared by the Space's current manifest.</td></tr>
+<tr><td class="num">409</td><td><code>duplicate-delivery</code></td><td>Repeated <code>Idempotency-Key</code>; the original receipt is included.</td></tr>
+<tr><td class="num">413</td><td><code>too-large</code></td><td>Body exceeds the receiver's limit.</td></tr>
+<tr><td class="num">422</td><td><code>proof-invalid</code>, <code>issuer-unresolvable</code>, <code>status-revoked</code>, <code>value-out-of-range</code>, <code>provenance-invalid</code>, <code>space-mismatch</code>, <code>manifest-expired</code>, <code>schema-invalid</code></td><td>Verification or validation failure; the type says which. Verification types (<code>proof-invalid</code>, <code>issuer-unresolvable</code>, <code>status-revoked</code>) MUST be distinguished from validation types.</td></tr>
+<tr><td class="num">429</td><td><code>rate-limited</code></td><td>Sender exceeded the receiver's quota; <code>Retry-After</code> SHOULD be present.</td></tr>
+<tr><td class="num">503</td><td><code>degraded</code></td><td>Receiver is in degraded mode (<a href="#aggregation-partition">§11.3</a>); senders SHOULD retry with the same key.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="http-space">
+<h3>The Space Manifest Resource</h3>
+<p>The Space Manifest is served at <code>/.well-known/agtp/space/{spaceId}</code>, where <code>spaceId</code> is the Space's DID, percent-encoded as necessary, on the origin advertised by the <code>AGTPSpaceManifest</code> service. <strong>GET</strong> returns the current manifest as <code>application/vc</code> with an <code>ETag</code> equal to the manifest's <code>manifestHash</code> (quoted) and a <code>Cache-Control</code> whose <code>max-age</code> does not extend past <code>validUntil</code> <cite>[<a href="#bib-rfc9111">RFC9111</a>]</cite>. Servers MUST honour <code>If-None-Match</code> with <code>304</code>. During an overlap window the server MAY expose the previous manifest at the same resource with the query parameter <code>version</code>.</p>
+</section>
+
+<section id="http-status">
+<h3>Status Resources</h3>
+<p>A Space or issuer that uses the Space status API form of credential status (<a href="#status">section 10.3</a>) serves it at <code>/.well-known/agtp/status</code>. <strong>GET</strong> with the query parameter <code>signal</code> (a <code>signalHash</code>) or <code>id</code> (a credential <code>id</code>) returns <code>application/json</code>: <code>{"signalHash", "status", "reason", "updatedAt"}</code> where <code>status</code> is <code>valid</code>, <code>revoked</code>, <code>suspended</code> or <code>unknown</code>. Bitstring status lists are served as their own specification requires and need no AGTP resource. A Space that revokes its acceptance of a signal (as opposed to the issuer revoking the signal) publishes that through the same resource with <code>status: revoked</code> and a <code>reason</code> URI.</p>
+</section>
+
+<section id="http-capabilities">
+<h3>The Capabilities Resource</h3>
+<p><strong>GET</strong> <code>/.well-known/agtp/capabilities</code> returns <code>application/json</code> describing what the agent or Space supports. The document MUST carry <code>agtpVersion</code>, <code>did</code> and <code>updatedAt</code>, and SHOULD carry <code>supportedProfiles</code> (profile identifiers from <a href="#registries">Appendix F</a>), <code>cryptosuites</code>, <code>statusFormats</code>, <code>hashing</code>, <code>features</code> and <code>extensions</code> (context URLs and dimension registries). The legacy key <code>signatureSuites</code> MAY be present for v2 consumers.</p>
+<div class="example" data-title="A capabilities document">
+<pre><code>{
+  "agtpVersion": "2.1.0",
+  "did": "did:web:solver.example",
+  "supportedProfiles": ["http/1.1", "didcomm/2.0", "mcp/2025-11-25", "ard/0.91", "okf/0.2"],
+  "cryptosuites": ["eddsa-rdfc-2022", "Ed25519Signature2020"],
+  "statusFormats": ["BitstringStatusList", "AGTPSpaceStatus"],
+  "hashing": ["rdfc-1.0+sha2-256"],
+  "features": ["metricsFeed", "signalIndex", "signedReceipts"],
+  "extensions": [
+    "https://schema.agtp.org/context/v2",
+    "https://rlvr.example/knowledge/dimensions/"
+  ],
+  "updatedAt": "2026-09-03T08:00:00Z"
+}</code></pre>
+</div>
+</section>
+
+<section id="http-signal-index">
+<h3>The Signal Index Resource</h3>
+<p>An agent or Space that advertises the <code>signalIndex</code> feature serves persistent signals at <code>/.well-known/agtp/signals</code>. <strong>GET</strong> accepts the query parameters <code>subject</code>, <code>space</code>, <code>dimension</code>, <code>issuer</code>, <code>since</code>, <code>until</code>, <code>limit</code> and <code>cursor</code>, and returns <code>application/json</code> with a <code>signals</code> array and an optional <code>next</code> cursor. Each element is either a complete signal or an object with <code>signalHash</code> and <code>url</code>. <strong>GET</strong> <code>/.well-known/agtp/signals/{signalHash}</code> returns one signal as <code>application/vc</code>. The index MUST serve only signals it has accepted and MUST NOT serve ephemeral signals. Consumers MUST verify what they retrieve; the index is a locator, not an oracle.</p>
+</section>
+
+<section id="http-metrics">
+<h3>The Metrics Resource</h3>
+<p><strong>GET</strong> <code>/.well-known/agtp/metrics</code> returns <code>application/json</code>: an array of objects with <code>metric</code>, <code>value</code>, <code>window</code>, <code>method</code> and <code>lastUpdated</code>, enabling third-party audit of the operational indicators defined in <a href="#metrics">Appendix E</a>. The resource is OPTIONAL and advertised by the <code>metricsFeed</code> feature.</p>
+</section>
+
+<section id="http-didcomm">
+<h3>DIDComm v2 Profile (Optional)</h3>
+<p>Implementations MAY additionally exchange signals as DIDComm v2 messages <cite>[<a href="#bib-didcomm-v2">DIDCOMM-V2</a>]</cite> using the message types <code>https://schema.agtp.org/didcomm/2.0/nonce-request</code>, <code>…/nonce</code>, <code>…/signal</code> and <code>…/receipt</code>. The signal message body carries the credential under <code>signal</code>, the nonce under <code>nonce</code> and the idempotency key under <code>idempotencyKey</code>; the receipt message body is the receipt object; <code>thid</code> correlates a receipt with its signal. The profile identifier is <code>didcomm/2.0</code>. DIDComm's own encryption and sender authentication replace the transport-level requirements of <a href="#http-feedback">section 9.1</a>; every other requirement of this document applies unchanged.</p>
+</section>
+</section>
+
+<section id="crypto">
+<h2>Cryptographic Suite</h2>
+
+<section id="proofs">
+<h3>Proofs</h3>
+<p>AGTP credentials and signed records are secured with Data Integrity <cite>[<a href="#bib-vc-data-integrity">VC-DATA-INTEGRITY</a>]</cite>. The baseline cryptosuite, which all implementations MUST support for both signing and verification, is <code>eddsa-rdfc-2022</code> <cite>[<a href="#bib-vc-di-eddsa">VC-DI-EDDSA</a>]</cite>: Ed25519 signatures over the RDF Dataset Canonicalization of the document. Implementations MAY support <code>eddsa-jcs-2022</code> and other registered cryptosuites, advertised in the capabilities document. The <code>Ed25519Signature2020</code> proof type used by AGTP v2 MUST be accepted by verifiers during the overlap window of <a href="#versioning">section 13</a> and SHOULD NOT be used for new signatures.</p>
+<p>A proof MUST have <code>proofPurpose</code> <code>assertionMethod</code>, MUST carry <code>created</code>, and MUST reference by <code>verificationMethod</code> a key that appears under <code>assertionMethod</code> in the issuer's DID Document. Verifiers MUST resolve the DID Document at verification time and, where the method provides history, SHOULD confirm that the key was authorised at <code>created</code>. A verifier MUST fail closed on a cryptosuite it does not support unless the Space's manifest explicitly permits a fallback. A document MAY carry a proof set with several proofs; it is valid if at least one proof verifies against the issuer, and a Space MAY require more.</p>
+</section>
+
+<section id="hashing">
+<h3>Canonicalisation and Hashing</h3>
+<p>Three hashes appear in this specification—<code>signalHash</code>, <code>manifestHash</code> and <code>contentHash</code>—and all are computed the same way. Given an AGTP document:</p>
+<ol>
+<li>Remove the <code>proof</code> property and, for manifests and descriptors, the hash property itself.</li>
+<li>Expand and canonicalise the resulting JSON-LD document with RDF Dataset Canonicalization <cite>[<a href="#bib-rdf-canon">RDF-CANON</a>]</cite> (RDFC-1.0, the standardised successor of URDNA2015) to obtain canonical N-Quads, serialised as UTF-8.</li>
+<li>Compute the SHA-256 digest of those bytes.</li>
+<li>Encode the digest as a multihash <cite>[<a href="#bib-multihash">MULTIHASH</a>]</cite> with the <code>sha2-256</code> code and then in multibase <cite>[<a href="#bib-multibase">MULTIBASE</a>]</cite> base64url without padding (prefix <code>u</code>), matching the <code>digestMultibase</code> convention of <cite>[<a href="#bib-vc-data-model">VC-DATA-MODEL-2.0</a>]</cite>.</li>
+</ol>
+<p>The resulting string, for example <code>uEiA4k3bQm1vZ2x0c3Q5Y2t4dGVzdGRhdGFhYWFhYWFhYWFhYWE</code>, is stable across key order, whitespace, context aliasing and re-signing. Two signals with equal <code>signalHash</code> make identical claims and MUST be treated as one by receivers and aggregators. The advertised value of <code>hashing</code> in a capabilities document for this procedure is <code>rdfc-1.0+sha2-256</code>; AGTP v2's <code>URDNA2015+multihash</code> denotes the same computation and MUST be treated as equivalent.</p>
+</section>
+
+<section id="status">
+<h3>Status and Revocation</h3>
+<p>Learning Signals and Space Manifests MUST carry a <code>credentialStatus</code> in one of two forms, and every consumer MUST support both:</p>
+<ul>
+<li>a <code>BitstringStatusListEntry</code> as specified by <cite>[<a href="#bib-vc-bitstring-status-list">VC-BITSTRING-STATUS-LIST</a>]</cite>, with <code>statusPurpose</code> <code>revocation</code> and optionally a second entry with purpose <code>suspension</code>; or</li>
+<li>an <code>AGTPSpaceStatus</code> entry whose <code>id</code> is a URL of a status resource (<a href="#http-status">section 9.5</a>) operated by the Space or the issuer.</li>
+</ul>
+<p>The legacy <code>StatusList2021Entry</code> type MUST be accepted during the overlap window. Consumers MUST check status before aggregating, routing on, anchoring or presenting a signal as verified, MAY cache results for the lifetime indicated by the status resource's caching headers, and MUST treat a status that cannot be retrieved as unknown rather than valid. Revoked signals MUST be excluded from aggregation; suspended signals SHOULD be. Revocation of a Space Manifest invalidates the interpretation of signals issued under it only to the extent the replacing manifest says; by default a successor manifest re-interprets earlier signals whose dimensions it still declares.</p>
+</section>
+
+<section id="keys">
+<h3>Keys and Key Management</h3>
+<p>Baseline keys are Ed25519 public keys expressed as <code>Multikey</code> verification methods <cite>[<a href="#bib-cid-1.0">CONTROLLED-IDENTIFIERS</a>]</cite>; <code>Ed25519VerificationKey2020</code> MUST be accepted. Issuers SHOULD use distinct keys for assertion and authentication, SHOULD rotate assertion keys by adding a new verification method before removing the old one, and MUST publish the removal through their DID method so that verifiers can date it. An issuer whose key is compromised SHOULD revoke the signals issued with it through its status mechanism; a Space SHOULD define, as policy, an emergency invalidation procedure for compromised issuers that operates through its own status resource without waiting on the issuer.</p>
+</section>
+</section>
+
+<section id="aggregation">
+<h2>Aggregation</h2>
+<p>Aggregation turns accepted signals into scores. It is the Space's prerogative, declared in its manifest; the protocol defines one reference function so that a manifest that says nothing is still interpretable, and the hooks by which Spaces substitute their own.</p>
+
+<section id="aggregation-default">
+<h3>Reference Default: Trust-Weighted Average</h3>
+<p>When a manifest omits <code>aggregation</code>, or names <code>https://schema.agtp.org/aggregation#TrustWeightedAverage</code>, the following applies. For each dimension <var>d</var> and subject, let <var>S<sub>d</sub></var> be the set of accepted, verified, non-revoked persistent signals about the subject on <var>d</var> whose <code>validFrom</code> lies within the window ending now. The aggregate is</p>
+<p style="text-align:center"><var>v̂<sub>d</sub></var> = ( Σ<sub><var>s</var> ∈ <var>S<sub>d</sub></var></sub> <var>w</var>(<var>s</var>) · <var>v<sub>s</sub></var> ) / ( Σ<sub><var>s</var> ∈ <var>S<sub>d</sub></var></sub> <var>w</var>(<var>s</var>) )</p>
+<p>where <var>w</var>(<var>s</var>) is the weight of the signal's issuer at aggregation time, initially <code>defaultWeight</code>, multiplied by the weight assigned to the signal's <code>issuerRelation</code>. The parameters, with their defaults, are:</p>
+<div class="table-wrap">
+<table class="props">
+<caption>Parameters of the reference aggregation</caption>
+<thead><tr><th>Parameter</th><th>Default</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>window</code></td><td><code>P30D</code></td><td>ISO 8601 duration of the sliding window.</td></tr>
+<tr><td><code>defaultWeight</code></td><td><code>1.0</code></td><td>Initial issuer weight. How weights change over time is policy; the default never changes them.</td></tr>
+<tr><td><code>minRaters</code></td><td><code>3</code></td><td>Minimum number of distinct issuers before an aggregate is published; below it the aggregate is undefined.</td></tr>
+<tr><td><code>maxWeightPerIssuer</code></td><td><code>0.4</code></td><td>Cap on any one issuer's fraction of the total weight; excess weight is discarded, not redistributed.</td></tr>
+<tr><td><code>issuerRelationWeights</code></td><td><code>{"self": 0, "affiliate": 1, "independent": 1}</code></td><td>Multipliers by <code>issuerRelation</code>; signals lacking the property are treated as <code>affiliate</code>.</td></tr>
+<tr><td><code>useConfidence</code></td><td><code>false</code></td><td>When true, <var>w</var>(<var>s</var>) is further multiplied by the signal's <code>confidence</code> (1 when absent).</td></tr>
+</tbody>
+</table>
+</div>
+<p>Aggregators MUST publish, alongside an aggregate, the <code>manifestHash</code> under which it was computed, the number of distinct issuers and the window, so that consumers can judge and recompute it.</p>
+</section>
+
+<section id="aggregation-hooks">
+<h3>Override Hooks</h3>
+<p>A manifest names another function by a URI in <code>aggregation.name</code>; registered identifiers are listed in <a href="#registries">Appendix F</a>. <code>aggregation.parameters</code> is open, and clients MAY ignore parameters they do not understand. <code>aggregation.impl</code> MAY point at a reference implementation with a version. A Space MAY declare different functions per dimension by giving <code>aggregation</code> as an array of objects each with a <code>dimensions</code> member. Whatever the function, it MUST be a pure function of the persistent signals the Space serves and of the manifest, so that an independent party can recompute it.</p>
+</section>
+
+<section id="aggregation-partition">
+<h3>Partition Tolerance and Degraded Mode</h3>
+<p>During network partitions or when a dependency (a DID method, a status list host, a registry) is unreachable, a receiver MAY enter <dfn id="dfn-degraded-mode">degraded mode</dfn>: it answers deliveries with <code>202</code> and a pending receipt rather than rejecting them, caches last-known-good manifests until their <code>validUntil</code>, marks published aggregates as tentative, and reconciles on heal by re-verifying pending signals, deduplicating by <code>signalHash</code> and, where anchors exist, checking anchored hashes. A receiver in degraded mode MUST say so through its status resource and SHOULD say so with <code>503</code> and the <code>degraded</code> problem type when it cannot even queue.</p>
+</section>
+
+<section id="aggregation-lifecycle">
+<h3>Interplay with Knowledge Lifecycle</h3>
+<p><em>This section is non-normative.</em> Dimension concepts and knowledge artifacts carry OKF <code>status</code> and <code>stale_after</code>. A Space that references them can let those fields drive aggregation: signals on a deprecated dimension stop counting when the successor manifest drops it; signals about a stale concept lose weight until a fresh verification event, backed by a signal, resets the clock. None of this requires a protocol change—it is a choice of aggregation parameters that reads the same frontmatter agents already read.</p>
+</section>
+</section>

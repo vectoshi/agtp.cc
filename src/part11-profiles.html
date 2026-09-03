@@ -1,0 +1,206 @@
+<section id="profiles">
+<h2>Binding Profiles</h2>
+<p>A binding profile is the normative mapping between an external standard and AGTP. Profiles are how AGTP stays small: the semantics of tasks, tools, interfaces, policies, API calls and registries remain upstream-authoritative, and each profile states only which AGTP objects an upstream object or event produces, which upstream identifiers are preserved, and where AGTP identifiers travel inside the upstream protocol. The profile identifiers used in capabilities documents and observation records are registered in <a href="#registries">Appendix F</a>.</p>
+
+<section id="profile-contract">
+<h3>The Profile Contract</h3>
+<p>Every profile, including those defined in this document and those registered later, MUST specify the following:</p>
+<ol>
+<li>the values of <code>sourceProtocol</code> and <code>sourceVersion</code>, and the members of <code>sourceRefs</code> that observation records preserve, with a statement of which upstream ordering semantics are preserved;</li>
+<li>which AGTP objects the profile creates—Observation Records, Artifacts, Capability Descriptors, Learning Signals, Receipts, Anchor Commitments—and from which upstream objects or events;</li>
+<li>how <code>actor</code> and <code>subject</code> DIDs are obtained, including the gateway identity rule when the upstream protocol lacks DIDs;</li>
+<li>how the interaction identifier is derived and how the provenance URI's artifacts are chosen;</li>
+<li>the separation between transport or execution outcomes (observations) and evaluative judgments (signals), and the issuance points the profile supports;</li>
+<li>the redaction and hashing strategy for payloads that may be private, expressed in terms of the privacy classes of <a href="#observation-record">section 5.7</a>; and</li>
+<li>where AGTP identifiers are carried inside the upstream protocol, using the reserved keys below and nothing that the upstream protocol reserves for itself.</li>
+</ol>
+<div class="table-wrap">
+<table>
+<caption>Reserved AGTP keys inside host protocols</caption>
+<thead><tr><th>Host</th><th>Where the keys live</th><th>Keys</th></tr></thead>
+<tbody>
+<tr><td>MCP</td><td><code>_meta</code> on requests, results and notifications, under the reverse-DNS prefix <code>org.agtp/</code></td><td><code>org.agtp/space</code>, <code>org.agtp/interaction</code>, <code>org.agtp/actor</code>, <code>org.agtp/did</code>, <code>org.agtp/provenance</code>, <code>org.agtp/artifacts</code>, <code>org.agtp/capability</code></td></tr>
+<tr><td>A2A</td><td><code>metadata</code> on Task, Message and Artifact; the extension URI <code>https://schema.agtp.org/a2a/ext/v1</code> declared in the Agent Card and negotiated with <code>A2A-Extensions</code></td><td><code>agtp:space</code>, <code>agtp:interaction</code>, <code>agtp:provenance</code>, <code>agtp:artifacts</code>, <code>agtp:capability</code>; extension params <code>did</code>, <code>feedbackService</code>, <code>spaces</code></td></tr>
+<tr><td>Model-runtime APIs</td><td>the request and response <code>metadata</code> map</td><td><code>agtp_space</code>, <code>agtp_interaction</code>, <code>agtp_provenance</code>, <code>agtp_actor</code></td></tr>
+<tr><td>ARD</td><td>entry properties under the <code>agtp</code> prefix bound in <code>@context</code></td><td><code>agtp:did</code>, <code>agtp:credentialType</code>, <code>agtp:spaces</code>, <code>agtp:dimensions</code>, <code>agtp:feedbackService</code>, <code>agtp:descriptor</code>, <code>agtp:verified</code>, <code>agtp:verifiedAt</code>, <code>agtp:summary</code></td></tr>
+<tr><td>OKF</td><td>frontmatter</td><td>the <code>agtp</code> mapping; <code>verified[].agtp_signal</code></td></tr>
+<tr><td>Agent Skills</td><td>the <code>metadata</code> map of SKILL.md frontmatter (string values only)</td><td><code>agtp-owner</code>, <code>agtp-capability</code>, <code>agtp-space</code></td></tr>
+<tr><td>ERC-8004</td><td>the registration file's <code>services</code> array; the off-chain feedback and validation files</td><td>a service named <code>AGTP</code>; an <code>agtp</code> object in feedback and validation files</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="profile-did-vc">
+<h3>DID and Verifiable Credentials (Baseline)</h3>
+<p>Profile identifier: <code>did-vc/2.1</code>. This profile is the substrate on which every other profile depends and is not optional. It consists of the identifier requirements of <a href="#identifiers">section 3</a>, the credential family and representations of <a href="#data-model">section 4</a>, and the cryptographic suite of <a href="#crypto">section 10</a>. In summary, an implementation of this profile:</p>
+<ul>
+<li>identifies every participant by a resolvable DID and discovers services through DID Documents;</li>
+<li>expresses every portable trust claim as a Verifiable Credential 2.0 with the AGTP context and one AGTP type;</li>
+<li>secures documents with Data Integrity proofs, baseline <code>eddsa-rdfc-2022</code>, and verifies them against <code>assertionMethod</code> keys;</li>
+<li>checks Bitstring Status List or Space status entries before use and fails closed on unresolvable DIDs, unsupported cryptosuites and unretrievable status;</li>
+<li>computes <code>signalHash</code>, <code>manifestHash</code> and <code>contentHash</code> by the procedure of <a href="#hashing">section 10.2</a>.</li>
+</ul>
+<p>Other profiles MAY start from non-credential records, but any claim that crosses an organisational boundary as evidence of trust SHOULD be upgraded to an AGTP credential before it does.</p>
+</section>
+
+<section id="profile-mcp">
+<h3>Model Context Protocol</h3>
+<p>Profile identifiers: <code>mcp/2025-11-25</code> and <code>mcp/2025-06-18</code>, corresponding to the MCP specification revisions <cite>[<a href="#bib-mcp">MCP</a>]</cite>. MCP defines how a client discovers and invokes a server's tools, resources and prompts over JSON-RPC 2.0; it says nothing about whether the results were any good. This profile makes MCP activity first-class evidence in AGTP without changing MCP semantics.</p>
+<div class="table-wrap">
+<table>
+<caption>MCP to AGTP mapping</caption>
+<thead><tr><th>MCP concept</th><th>AGTP object</th><th>Rule</th></tr></thead>
+<tbody>
+<tr><td>Server identity (<code>serverInfo</code> in the <code>initialize</code> result)</td><td>Agent</td><td>A server SHOULD state its DID in <code>_meta["org.agtp/did"]</code> of the <code>initialize</code> result and SHOULD be reachable from its DID Document through an <code>MCPServer</code> service. A server without a DID is represented by the client's gateway identity.</td></tr>
+<tr><td><code>tools/list</code>, <code>resources/list</code>, <code>resources/templates/list</code>, <code>prompts/list</code></td><td>Capability, Capability Descriptor</td><td>Each entry becomes one capability with <code>interfaceType</code> <code>mcp-tool</code>, <code>mcp-resource</code> or <code>mcp-prompt</code>; <code>interface</code> carries <code>protocol: "mcp"</code>, <code>version</code>, <code>server</code> (its URL or DID), the tool name, resource URI or prompt name, and <code>schemaHash</code> over the exact <code>inputSchema</code> (and <code>outputSchema</code>) advertised. Tool annotations (<code>readOnlyHint</code>, <code>destructiveHint</code>, <code>idempotentHint</code>, <code>openWorldHint</code>) and <code>title</code> are copied into <code>constraints</code>.</td></tr>
+<tr><td><code>tools/call</code></td><td>Interaction, Observation Record (<code>MCPToolCallRecord</code>)</td><td><code>sourceRefs</code> preserves the JSON-RPC request <code>id</code>, the tool name, and the server identifier; the record's <code>claims</code> carry <code>isError</code> and timing. The interaction identifier is taken from <code>_meta["org.agtp/interaction"]</code> when the client supplied one, otherwise derived per <a href="#interaction-identifiers">§3.3</a>.</td></tr>
+<tr><td>Tool result <code>content</code>, <code>structuredContent</code> and resource links</td><td>Artifacts</td><td>Each content block is content-addressed individually (role <code>output</code>); a resource link becomes an artifact reference whose <code>uri</code> is the link and whose <code>cid</code> is computed when the resource is read. The request arguments are content-addressed with role <code>input</code>, after redaction per Space policy.</td></tr>
+<tr><td><code>resources/read</code></td><td>Interaction, Artifact</td><td>The resource contents are one artifact (role <code>knowledge</code> when the resource is an OKF concept); the record preserves the resource URI and any <code>mimeType</code>.</td></tr>
+<tr><td><code>prompts/get</code></td><td>Artifact</td><td>The returned messages are content-addressed with role <code>prompt</code>.</td></tr>
+<tr><td><code>sampling/createMessage</code>, <code>elicitation/create</code></td><td>Interaction, Observation Record</td><td>Server-initiated model calls are interactions whose <code>actor</code> is the client; elicitation responses are observations. A human's explicit judgment collected through elicitation becomes a signal only under the A2UI profile's rule (<a href="#profile-a2ui">§12.8</a>).</td></tr>
+<tr><td>Tasks (where the revision defines them)</td><td>Interaction lifecycle</td><td>A task's identifier is preserved in <code>sourceRefs.taskId</code>; status notifications are observations in order.</td></tr>
+<tr><td>Log and progress notifications</td><td>Observation Records or Artifacts</td><td>Logged at the privacy class the Space's policy assigns to traces.</td></tr>
+<tr><td>Evaluation of an execution</td><td>Learning Signal</td><td>Issued by a Space evaluator, never by the fact of a successful call.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The following requirements apply:</p>
+<ol>
+<li>Clients that participate in AGTP SHOULD send <code>_meta["org.agtp/space"]</code>, <code>_meta["org.agtp/interaction"]</code> and <code>_meta["org.agtp/actor"]</code> on <code>tools/call</code> and <code>resources/read</code> requests so that the server can attach its records to the same interaction. Servers MUST ignore these keys when they do not understand them, as MCP requires of unknown <code>_meta</code> keys.</li>
+<li>Servers that participate in AGTP SHOULD return <code>_meta["org.agtp/artifacts"]</code> (an array of artifact references) and MAY return <code>_meta["org.agtp/provenance"]</code> on results, so that the client and the server agree on the CIDs before either issues or receives a signal.</li>
+<li>Capability Descriptors MUST be regenerated, with a new <code>contentHash</code>, whenever a tool's schema changes; <code>notifications/tools/list_changed</code> is the trigger. Observation records MUST reference the descriptor <code>contentHash</code> in force at call time.</li>
+<li>Tool descriptions are untrusted input from the server. An integrator MUST NOT treat instructions in a description as AGTP operations, and a Space MAY define a dimension under which evaluators score descriptions for injection.</li>
+<li>Where MCP's authorization framework is used, the resource server's identity SHOULD be bound to its DID through <code>alsoKnownAs</code> so that the OAuth resource and the AGTP subject are verifiably the same party.</li>
+</ol>
+<div class="example" data-title="An MCP tool call carrying AGTP identifiers in _meta">
+<pre><code>// request
+{ "jsonrpc": "2.0", "id": 7, "method": "tools/call",
+  "params": {
+    "name": "run_sql",
+    "arguments": { "sql": "SELECT SUM(amount) FROM orders WHERE year = 2026" },
+    "_meta": {
+      "org.agtp/space": "did:web:rlvr.example",
+      "org.agtp/interaction": "urn:uuid:6d2a4c8e-9b1f-4e3d-8a7c-5f6e7d8c9b0a",
+      "org.agtp/actor": "did:web:orchestrator.example"
+    }
+  }
+}
+
+// result
+{ "jsonrpc": "2.0", "id": 7,
+  "result": {
+    "content": [{ "type": "text", "text": "1834219.55" }],
+    "structuredContent": { "sum": 1834219.55 },
+    "isError": false,
+    "_meta": {
+      "org.agtp/did": "did:web:solver.example",
+      "org.agtp/artifacts": [
+        { "role": "input",  "cid": "bafkreib5x2s3q6l7ihd4qq7mmm2a2m3iuqhz7vqz3zjzq6p3ep4gk7v4wy" },
+        { "role": "output", "cid": "bafkreiaw3fsg7cn5e6tjyd5zvo2ujqcrrxi3rlhqaw5j6ozx7fqyq2wtia" }
+      ],
+      "org.agtp/provenance": "agtp://provenance?space=did:web:rlvr.example&amp;interaction=urn:uuid:6d2a4c8e-9b1f-4e3d-8a7c-5f6e7d8c9b0a&amp;artifact=bafkreiaw3fsg7cn5e6tjyd5zvo2ujqcrrxi3rlhqaw5j6ozx7fqyq2wtia,bafkreib5x2s3q6l7ihd4qq7mmm2a2m3iuqhz7vqz3zjzq6p3ep4gk7v4wy"
+    }
+  }
+}</code></pre>
+</div>
+</section>
+
+<section id="profile-ard">
+<h3>Agentic Resource Discovery</h3>
+<p>Profile identifier: <code>ard/0.91</code>. The normative content of this profile is <a href="#discovery">section 7</a>. In the terms of the profile contract: <code>sourceProtocol</code> is <code>ard</code>; <code>sourceRefs</code> preserves the entry <code>identifier</code>, the registry <code>source</code> and the search <code>score</code>; the profile creates Capability Descriptors (from entries the publisher controls) and Observation Records (for searches and verification outcomes); the actor is the searching agent and the subject is the entry's <code>agtp:did</code>; discovery events are observations and never signals; entries are public by construction and carry no private payloads; and AGTP identifiers travel in the entry under the <code>agtp</code> prefix.</p>
+</section>
+
+<section id="profile-okf">
+<h3>Open Knowledge Format</h3>
+<p>Profile identifier: <code>okf/0.2</code>. The normative content of this profile is <a href="#knowledge">section 8</a>. In the terms of the profile contract: <code>sourceProtocol</code> is <code>okf</code> and <code>sourceVersion</code> is the bundle's <code>okf_version</code>; <code>sourceRefs</code> preserves the bundle CID, the concept path and, where applicable, the git commit; the profile creates Artifacts (bundles, concepts, receipts), Observation Records (generation, usage, reads), Capability Descriptors (attested computations) and Learning Signals (verification events, attester verdicts); actors are obtained from the DID forms of OKF actor identifiers; the interaction identifier for an attestation is derived from the computation's CID and parameters; verification events and attester verdicts are the issuance points; bodies MAY be private with concept CIDs still bound in provenance; and AGTP identifiers travel in the <code>agtp</code> frontmatter mapping.</p>
+</section>
+
+<section id="profile-openai-api">
+<h3>Model-Runtime APIs (OpenAI API Conventions)</h3>
+<p>Profile identifier: <code>openai-api/1</code>. This profile covers the request and response conventions popularised by the OpenAI API <cite>[<a href="#bib-openai-api">OPENAI-API</a>]</cite>—messages with roles, tool and function schemas in JSON Schema, tool-call identifiers, response identifiers, a free-form <code>metadata</code> map and usage accounting—as implemented by many model providers and gateways. It does not depend on any one provider.</p>
+<div class="table-wrap">
+<table>
+<caption>Model-runtime API to AGTP mapping</caption>
+<thead><tr><th>API concept</th><th>AGTP object</th><th>Rule</th></tr></thead>
+<tbody>
+<tr><td>One request and its response</td><td>Interaction, Observation Record (<code>ModelRunRecord</code>)</td><td><code>sourceRefs</code> preserves the response identifier and, where present, the previous-response identifier that chains a conversation. The interaction identifier is taken from <code>metadata.agtp_interaction</code> when the caller set it.</td></tr>
+<tr><td>Model identifier and runtime parameters</td><td>Artifact (role <code>config</code>)</td><td>The request with credentials and payload removed is content-addressed so that provenance records what model and settings produced the output.</td></tr>
+<tr><td>Tool and function schemas</td><td>Capability, Capability Descriptor (<code>api-tool</code>)</td><td>Normalised as for MCP, with <code>schemaHash</code> over the schema as sent. A tool backed by MCP or A2A reuses that profile's capability identifier rather than creating a second one.</td></tr>
+<tr><td>Tool calls and their outputs</td><td>Observation Records, Artifacts</td><td>Each call identifier is preserved; outputs are content-addressed. Hosted tools, including provider-hosted MCP connectors, are mapped through the MCP profile where the provider exposes the underlying call.</td></tr>
+<tr><td>Generated outputs</td><td>Artifacts (role <code>output</code>)</td><td>Stored raw, redacted or as CID only, according to Space policy.</td></tr>
+<tr><td>Usage, latency, cost</td><td>Observation <code>claims</code></td><td>Observations, never signals.</td></tr>
+<tr><td>Human or evaluator judgment of an output</td><td>Learning Signal</td><td>Issued with a Space, dimensions and provenance binding the output artifact.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The API endpoint is not an AGTP identity; the calling agent, service or gateway is, and it holds the DID. Where several agents share one gateway, the gateway MUST preserve the delegated actor in <code>sourceRefs</code> or a Delegation credential. Callers SHOULD set <code>metadata.agtp_space</code>, <code>metadata.agtp_interaction</code> and, where the provider echoes metadata, read them back to confirm correlation. Provider-computed evaluation results, where a provider offers them, are observations until a Space evaluator adopts them as the basis of a signal.</p>
+</section>
+
+<section id="profile-a2a">
+<h3>Agent2Agent Protocol</h3>
+<p>Profile identifier: <code>a2a/1.0</code>, corresponding to A2A 1.0 <cite>[<a href="#bib-a2a">A2A</a>]</cite>; earlier revisions are identified by their own version. A2A provides task lifecycle, messaging, artifact exchange and capability discovery between agents. The correct integration is not to collapse A2A into AGTP but to make A2A interactions emit AGTP objects.</p>
+<div class="table-wrap">
+<table>
+<caption>A2A to AGTP mapping</caption>
+<thead><tr><th>A2A concept</th><th>AGTP object</th><th>Rule</th></tr></thead>
+<tbody>
+<tr><td>Agent Card</td><td>Agent, Capability Descriptors</td><td>Each skill becomes a capability of <code>interfaceType</code> <code>a2a-skill</code>; <code>interface</code> carries the card URL, the skill identifier and <code>schemaHash</code> over the skill's entry. The card SHOULD declare the AGTP extension with params <code>did</code>, <code>feedbackService</code> and <code>spaces</code>; where the card is signed, the signature SHOULD verify against a key in that DID's Document.</td></tr>
+<tr><td>Task</td><td>Interaction</td><td>The task identifier MUST be preserved in <code>sourceRefs.taskId</code> and the context identifier in <code>sourceRefs.contextId</code>; the interaction identifier is derived from the task identifier per <a href="#interaction-identifiers">§3.3</a> unless <code>metadata["agtp:interaction"]</code> was supplied.</td></tr>
+<tr><td>Task status and message events</td><td>Observation Records (<code>A2ATaskEventRecord</code>)</td><td>Event ordering MUST be preserved; each record carries the task state.</td></tr>
+<tr><td>Message and Artifact parts</td><td>Artifacts</td><td>Content-addressed with roles <code>input</code> and <code>output</code>; A2A's own artifact identifiers are preserved in <code>sourceRefs.artifactId</code>.</td></tr>
+<tr><td>Protocol acknowledgements and results</td><td>Observation Records</td><td>An A2A response MUST NOT be treated as an AGTP receipt; receipts come only from feedback services.</td></tr>
+<tr><td>Evaluation of a task outcome</td><td>Learning Signal</td><td>Issued at declared points: post-completion verification, peer review, tournament outcome, human judgment.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Task completion, cancellation, failure or rejection is an execution fact recorded as an observation, not a signal. Long-running tasks MAY be divided into several interactions provided each preserves the task identifier and lineage to the task's artifacts. An A2A agent that lacks a DID is represented by a gateway identity, and the mapping between its card URL and the DID SHOULD be published as a Capability Descriptor or in the DID Document's <code>alsoKnownAs</code>.</p>
+</section>
+
+<section id="profile-a2ui">
+<h3>A2UI</h3>
+<p>Profile identifiers: <code>a2ui/0.8</code> (production baseline) and <code>a2ui/0.9</code> (draft) <cite>[<a href="#bib-a2ui">A2UI</a>]</cite>. A2UI is the human-facing surface where much of the highest-value feedback originates. This profile makes UI interactions and human judgments portable without defining UI semantics.</p>
+<ul>
+<li>A UI session or context is an Interaction, bound to the same interaction identifier as the A2A, MCP or model-API activity it presents wherever that identifier is available.</li>
+<li>UI events are Observation Records (<code>UIEventRecord</code>) with event identifiers, order and timestamps preserved in <code>sourceRefs</code>; rendered snapshots, prompts and outputs are Artifacts at the privacy class Space policy assigns.</li>
+<li>Only evaluative judgments—ratings, preferences, corrections, approvals and rejections, rubric scores—become Learning Signals. Telemetry (clicks, dwell, scroll) never does. Human-issued signals SHOULD carry <code>issuerRelation</code> and MAY carry <code>confidence</code>; the issuer is the human's DID or a gateway identity with a Delegation credential.</li>
+<li>Evidence gathered in the interface—screenshots, annotations, correction diffs—becomes Artifacts referenced from provenance. For sensitive interfaces implementations SHOULD distil ephemeral UI observations into a persistent summary signal with a commitment.</li>
+<li>Mappings MUST be version-tagged; v0.8 and v0.9 fields MUST NOT be mixed in one record without a translation layer.</li>
+</ul>
+</section>
+
+<section id="profile-agents-skills">
+<h3>AGENTS.md and Agent Skills</h3>
+<p>Profile identifier: <code>agents-skills/1</code>. AGENTS.md <cite>[<a href="#bib-agents-md">AGENTS-MD</a>]</cite> expresses repository or workspace policy for coding agents in free-form Markdown, with nearest-file precedence. Agent Skills <cite>[<a href="#bib-agent-skills">AGENT-SKILLS</a>]</cite> package a capability as a directory with a <code>SKILL.md</code> whose YAML frontmatter carries <code>name</code>, <code>description</code> and optional <code>license</code>, <code>compatibility</code>, <code>metadata</code> and <code>allowed-tools</code>. Together they are the intent layer: what an agent may do and what it says it can do.</p>
+<ul>
+<li>An AGENTS.md file in force during an interaction is an Artifact (role <code>policy</code>) referenced from the observation record's <code>policyRefs</code>. Which file applied, under nearest-file precedence, is recorded, not inferred. An AGENTS.md MAY be exchanged across organisational boundaries as a <code>PolicyAssertion</code> credential binding its CID.</li>
+<li>A skill is a Capability with <code>interfaceType</code> <code>agent-skill</code>. The descriptor's <code>name</code> and <code>description</code> come from the frontmatter; <code>constraints</code> carries <code>allowed-tools</code>, <code>compatibility</code> and <code>license</code>; <code>sourceArtifacts</code> carries the CID of <code>SKILL.md</code> and of the skill directory; <code>contentHash</code> changes whenever either changes.</li>
+<li>Skill authors MAY place <code>agtp-owner</code> (a DID), <code>agtp-capability</code> (the capability URI or ARD identifier) and <code>agtp-space</code> in the frontmatter <code>metadata</code> map, whose values are strings as Agent Skills requires.</li>
+<li>Policy and capability MUST NOT be flattened into one another: an AGENTS.md constraint is a <code>policyRef</code>, not a capability, and instruction text in a SKILL.md body is execution guidance, not a declaration.</li>
+<li>Signals about a skill are issued against its capability URI, and observation records reference the descriptor <code>contentHash</code> used at execution time, so that a Space can compare declared constraints with observed behaviour version by version.</li>
+</ul>
+<p>OKF attested computations reference skills through <code>executor.resource</code>; when they do, the skill's capability identifier and the computation's capability identifier SHOULD be linked through <code>sourceArtifacts</code> so that signals on either inform the other.</p>
+</section>
+
+<section id="profile-erc8004">
+<h3>ERC-8004 Trustless Agents</h3>
+<p>Profile identifier: <code>erc8004/1</code>. ERC-8004 <cite>[<a href="#bib-erc-8004">ERC-8004</a>]</cite> defines three on-chain registries: an identity registry that mints an agent identifier bound to an off-chain registration file, a reputation registry that records feedback entries pointing at off-chain feedback files, and a validation registry that records validation requests and responses by hash. This profile lets AGTP use those registries for discovery and anchoring while keeping signals, manifests and traces off-chain, portable and chain-neutral.</p>
+<div class="table-wrap">
+<table>
+<caption>ERC-8004 to AGTP mapping</caption>
+<thead><tr><th>ERC-8004 concept</th><th>AGTP object</th><th>Rule</th></tr></thead>
+<tbody>
+<tr><td>Identity registry entry and registration file</td><td>Agent discovery pointer</td><td>The registration file's <code>services</code> array MUST include an entry named <code>DID</code> carrying the agent's DID and SHOULD include an entry named <code>AGTP</code> whose endpoint is the feedback service URL and whose version is the AGTP version. The DID Document SHOULD reference the registration in <code>alsoKnownAs</code> using the file's <code>agentRegistry</code> form. Signing keys and the agent wallet MAY coincide through <code>did:pkh</code>.</td></tr>
+<tr><td>Reputation registry feedback entry</td><td>Pointer to a Learning Signal</td><td>The entry's feedback URI MUST locate a persistent Learning Signal and its feedback hash MUST be the SHA-256 digest of the signal's canonical N-Quads—the digest inside <code>signalHash</code>—so that the on-chain hash and the AGTP hash agree. The entry's value and decimals encode the signal's first dimension value; its first tag is the dimension identifier and its second the Space DID; its endpoint is the capability's interface locator.</td></tr>
+<tr><td>Off-chain feedback file</td><td>Envelope for a signal</td><td>The file MAY embed the signal or its URL under an <code>agtp</code> object together with <code>signalHash</code>; the ERC's own members are left as the ERC defines them.</td></tr>
+<tr><td>Feedback revocation</td><td>Status</td><td>Revoking on-chain feedback SHOULD be mirrored by revoking the signal's status, and vice versa.</td></tr>
+<tr><td>Response appended to feedback</td><td>Artifact</td><td>The subject's response file is an artifact referenced from the signal's subject-side records; it is not itself a signal.</td></tr>
+<tr><td>Validation request</td><td>Provenance</td><td>The request URI SHOULD locate an observation record or artifact bundle whose provenance URI names the interaction; the request hash is the digest of that document.</td></tr>
+<tr><td>Validation response</td><td>Learning Signal and Anchor Commitment</td><td>The validator issues a Learning Signal whose provenance equals the request's, publishes it at the response URI with the response hash as its digest, and MAY describe the on-chain record as an Anchor Commitment with <code>chain</code>, <code>reference.contract</code>, <code>reference.transaction</code> and <code>reference.requestHash</code>.</td></tr>
+<tr><td>On-chain summaries and scores</td><td>Policy outputs</td><td>Not AGTP trust semantics. A consumer that reads a registry summary MUST be able to trace it to the underlying signals.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The recommended resolution order is: registry entry, then DID and services, then manifests, descriptors and signals off-chain, then proofs and status, then optionally the anchor. AGTP verification is authoritative at every step; the chain adds discovery and audit, and never replaces DID resolution or proof verification. Raw traces and private evidence MUST NOT be required on-chain for conformance.</p>
+</section>
+</section>

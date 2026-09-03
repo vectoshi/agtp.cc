@@ -1,0 +1,62 @@
+<div class="band" aria-hidden="true"><span>AGTP · Editor's Draft · 3 September 2026</span></div>
+<div class="band-mobile" aria-hidden="true">AGTP · Editor's Draft · 3 September 2026</div>
+<main>
+<div class="head">
+  <a class="logo" href="./" aria-label="AGTP home">
+    <svg viewBox="0 0 80 56" role="img" aria-label="AGTP globe mark" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+      <rect x="3" y="3" width="74" height="50" rx="25" ry="25"></rect>
+      <line x1="3" y1="28" x2="77" y2="28"></line>
+      <line x1="40" y1="3" x2="40" y2="53"></line>
+      <path d="M23 4 C 15 16, 15 40, 23 52"></path>
+      <path d="M57 4 C 65 16, 65 40, 57 52"></path>
+      <path d="M11 13 C 25 25, 55 25, 69 13"></path>
+      <path d="M11 43 C 25 31, 55 31, 69 43"></path>
+    </svg>
+    <span class="wordmark">agtp://</span>
+  </a>
+  <h1>Agent Graph Trust Protocol (AGTP) 2.1</h1>
+  <p class="subtitle">Identity, provenance and learning signals for the agent graph</p>
+  <h2 id="state">Editor's Draft, 3 September 2026</h2>
+  <dl>
+    <dt>This version:</dt>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20260903/">https://agtp.cc/2026/ED-agtp-2.1-20260903/</a></dd>
+    <dt>Latest published version:</dt>
+    <dd><a href="https://agtp.cc/">https://agtp.cc/</a></dd>
+    <dt>Latest editor's draft:</dt>
+    <dd><a href="https://github.com/vectoshi/agtp.cc">https://github.com/vectoshi/agtp.cc</a></dd>
+    <dt>Protocol repository:</dt>
+    <dd><a href="https://github.com/new-foundation/agtp">https://github.com/new-foundation/agtp</a></dd>
+    <dt>Previous version:</dt>
+    <dd>AGTP v2 specification text (repository README, 24 February 2026)</dd>
+    <dt>Editors:</dt>
+    <dd>The AGTP Consortium, convened by <a href="https://newcoin.org/">Newfoundation</a></dd>
+    <dt>Feedback:</dt>
+    <dd><a href="https://github.com/vectoshi/agtp.cc/issues">GitHub issues</a> &middot; <a href="mailto:contact@newcoin.org">contact@newcoin.org</a></dd>
+    <dt>Errata:</dt>
+    <dd>No errata have been recorded for this draft.</dd>
+    <dt>Companion pages:</dt>
+    <dd><a href="https://newcoin.org/">newcoin.org</a> &middot; <a href="https://newcoin.org/Open_Learning">Newcoin: Open Learning</a> &middot; <a href="https://newcoin.org/Core_Concepts">Newcoin: Core Concepts</a></dd>
+  </dl>
+  <p class="copyright">Copyright © 2024–2026 Newfoundation. Built with meaning in mind. AGTP is published as an open specification; licensing terms for this text and for the machine-readable artifacts are recorded in the specification repository. Terminology reused from W3C, IETF and community specifications remains governed by those specifications, which are authoritative for their own contents.</p>
+</div>
+
+<section id="abstract">
+<h2>Abstract</h2>
+<p>The Agent Graph Trust Protocol (AGTP) defines the smallest set of interoperable primitives required for heterogeneous agents—human, software and hybrid—to coordinate and compound intelligence through verifiable feedback. Every agent is identified by a W3C Decentralized Identifier (DID). Every portable claim is a W3C Verifiable Credential (VC). The atomic unit of feedback is a signed <em>Learning Signal</em>; the atomic unit of policy is a signed <em>Space Manifest</em>; and a canonical <em>provenance URI</em> binds every evaluation to the content-addressed artifacts that make it reproducible.</p>
+<p>AGTP does not define how agents execute, discover or describe their work. It defines how the outputs of the standards that do—the Model Context Protocol (MCP) for tool use, Agentic Resource Discovery (ARD) for finding and verifying resources, the Open Knowledge Format (OKF) for knowledge and context, and the DID and VC families for identity and proof—become portable, verifiable and composable evidence. Binding profiles map each of these standards, together with A2A, A2UI, AGENTS.md and Agent Skills, model-runtime APIs and ERC-8004 registries, into one canonical trust and learning layer.</p>
+<p>Version 2.1 keeps the mandatory HTTP interoperability profile, the baseline cryptographic suite, canonical hashing for deduplication and replay controls introduced in version 2, aligns them with Verifiable Credentials 2.0 and Data Integrity, and adds a credential family, a discovery profile built on ARD and a knowledge profile built on OKF. Policy—aggregation, incentives, governance—stays at the edge, inside Spaces, so that pluralism does not fragment the substrate.</p>
+</section>
+
+<section id="sotd">
+<h2>Status of This Document</h2>
+<p><em>This section describes the status of this document at the time of its publication. Other documents may supersede this document.</em></p>
+<p>This document is an Editor's Draft of AGTP 2.1 prepared for the AGTP Consortium and published by Newfoundation. It consolidates the AGTP v2 specification text, the binding profiles developed during the 2026 convergence work and new profiles for Agentic Resource Discovery and the Open Knowledge Format into a single document laid out as a standards-track specification. It is not yet a Consortium Recommendation; it is published to gather implementation experience and review.</p>
+<p>This document is not a product of the World Wide Web Consortium, the Internet Engineering Task Force, the Agentic AI Foundation, the A2A project, the ARD project or Google Cloud. It references specifications maintained by those bodies and does not modify them. Where a referenced specification changes, that specification prevails and this document will be updated through the change process in <a href="#versioning">section 13</a>.</p>
+<p>Changes relative to AGTP v2 are listed in <a href="#changes">Appendix G</a>. The most consequential are the alignment with Verifiable Credentials 2.0 and the Data Integrity cryptosuites, the introduction of the credential family (<a href="#credential-family">section 4.2</a>), the discovery profile (<a href="#discovery">section 7</a>) and the knowledge profile (<a href="#knowledge">section 8</a>). Producers and consumers of AGTP v2 objects remain conformant during the overlap window described in <a href="#versioning">section 13</a>.</p>
+<p>Comments are welcome through the issue tracker of the specification repository or by email to the editors. Implementers are asked to report which conformance classes they claim (<a href="#conformance">section 1.5</a>) so that the conformance suite in <a href="#conformance-descriptors">Appendix D</a> can be extended from real deployments.</p>
+</section>
+
+<nav id="toc">
+<h2>Table of Contents</h2>
+<!--TOC-->
+</nav>

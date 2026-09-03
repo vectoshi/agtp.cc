@@ -1,0 +1,617 @@
+<section id="examples" class="appendix informative">
+<h2>Examples</h2>
+<p>The examples in this appendix complete the ones given inline. Proof values and hashes are illustrative; comments inside JSON are not valid JSON and are shown only to explain the fields.</p>
+
+<section id="example-capability-descriptor">
+<h3>A Capability Descriptor Derived from an MCP Tool</h3>
+<div class="example" data-title="Capability Descriptor for an MCP tool">
+<pre><code>{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://schema.agtp.org/context/v2"
+  ],
+  "id": "https://solver.example/agtp/capabilities/run-sql.vc.json",
+  "type": ["VerifiableCredential", "CapabilityDescriptor"],
+  "issuer": "did:web:solver.example",
+  "validFrom": "2026-08-30T00:00:00Z",
+  "credentialSubject": {
+    "id": "urn:air:solver.example:tool:run-sql",
+    "owner": "did:web:solver.example",
+    "name": "run_sql",
+    "description": "Run read-only SQL against the sales warehouse.",
+    "interfaceType": "mcp-tool",
+    "interface": {
+      "protocol": "mcp",
+      "version": "2025-11-25",
+      "server": "https://mcp.solver.example/",
+      "tool": "run_sql",
+      "schemaHash": "uEiBqk0f2Yc0wq9GJk4oQx1u3v8Zr2tTz7nQmC5aXbYdEfg"
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": { "sql": { "type": "string" } },
+      "required": ["sql"]
+    },
+    "constraints": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "policyRefs": ["bafkreicagentsmdpolicyfilecidxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]
+    },
+    "sourceArtifacts": [
+      { "role": "schema", "cid": "bafkreib5x2s3q6l7ihd4qq7mmm2a2m3iuqhz7vqz3zjzq6p3ep4gk7v4wy",
+        "uri": "https://mcp.solver.example/.well-known/mcp-server-card.json" }
+    ],
+    "version": "1.4.0",
+    "contentHash": "uEiDm2Vt6pQ0x4r1yTk8nJ3wLd9cFh5sGb7vXa2eZq1oPmA",
+    "discovery": { "ard": "urn:air:solver.example:tool:run-sql" },
+    "spaces": ["did:web:rlvr.example"]
+  },
+  "proof": { "type": "DataIntegrityProof", "cryptosuite": "eddsa-rdfc-2022",
+             "created": "2026-08-30T00:00:01Z",
+             "verificationMethod": "did:web:solver.example#key-1",
+             "proofPurpose": "assertionMethod", "proofValue": "z4Qm…" }
+}</code></pre>
+</div>
+</section>
+
+<section id="example-observation">
+<h3>An Observation Record for an MCP Tool Call</h3>
+<div class="example" data-title="MCPToolCallRecord">
+<pre><code>{
+  "@context": ["https://schema.agtp.org/context/v2"],
+  "type": ["ObservationRecord", "MCPToolCallRecord"],
+  "id": "urn:uuid:c1a2b3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "space": "did:web:rlvr.example",
+  "actor": "did:web:orchestrator.example",
+  "subject": "urn:air:solver.example:tool:run-sql",
+  "sourceProtocol": "mcp",
+  "sourceVersion": "2025-11-25",
+  "sourceRefs": { "server": "did:web:solver.example", "requestId": 7, "toolName": "run_sql" },
+  "interaction": "urn:uuid:6d2a4c8e-9b1f-4e3d-8a7c-5f6e7d8c9b0a",
+  "capabilityRefs": [
+    { "id": "urn:air:solver.example:tool:run-sql",
+      "contentHash": "uEiDm2Vt6pQ0x4r1yTk8nJ3wLd9cFh5sGb7vXa2eZq1oPmA" }
+  ],
+  "artifacts": [
+    { "role": "input",  "cid": "bafkreib5x2s3q6l7ihd4qq7mmm2a2m3iuqhz7vqz3zjzq6p3ep4gk7v4wy" },
+    { "role": "output", "cid": "bafkreiaw3fsg7cn5e6tjyd5zvo2ujqcrrxi3rlhqaw5j6ozx7fqyq2wtia" }
+  ],
+  "provenance": "agtp://provenance?space=did:web:rlvr.example&amp;interaction=urn:uuid:6d2a4c8e-9b1f-4e3d-8a7c-5f6e7d8c9b0a&amp;artifact=bafkreiaw3fsg7cn5e6tjyd5zvo2ujqcrrxi3rlhqaw5j6ozx7fqyq2wtia,bafkreib5x2s3q6l7ihd4qq7mmm2a2m3iuqhz7vqz3zjzq6p3ep4gk7v4wy",
+  "observedAt": "2026-09-03T13:58:40Z",
+  "privacyClass": "redacted",
+  "claims": { "isError": false, "durationMs": 4180 }
+}</code></pre>
+</div>
+</section>
+
+<section id="example-receipt">
+<h3>A Signed Interaction Receipt</h3>
+<div class="example" data-title="InteractionReceipt issued by a Space">
+<pre><code>{
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "id": "urn:uuid:7e8f9a0b-1c2d-4e3f-8a9b-0c1d2e3f4a5b",
+  "type": ["VerifiableCredential", "InteractionReceipt"],
+  "issuer": "did:web:rlvr.example",
+  "validFrom": "2026-09-03T14:02:15Z",
+  "credentialSubject": {
+    "receiptId": "urn:uuid:7e8f9a0b-1c2d-4e3f-8a9b-0c1d2e3f4a5b",
+    "signalId": "urn:uuid:0c9d7b5e-1f2a-4d3c-8e6f-7a5b4c3d2e1f",
+    "signalHash": "uEiA4k3bQm1vZ2x0c3Q5Y2t4dGVzdGRhdGFhYWFhYWFhYWFhYWE",
+    "acceptState": "accepted",
+    "receivedAt": "2026-09-03T14:02:14Z",
+    "receiver": "did:web:rlvr.example",
+    "space": "did:web:rlvr.example",
+    "nonce": "K3z9Qm2vX7bR4tYw8nLp1sHd",
+    "idempotencyKey": "9b2c6f1e-3d4a-4b5c-8d7e-6f5a4b3c2d1e"
+  },
+  "proof": { "type": "DataIntegrityProof", "cryptosuite": "eddsa-rdfc-2022",
+             "created": "2026-09-03T14:02:15Z",
+             "verificationMethod": "did:web:rlvr.example#key-1",
+             "proofPurpose": "assertionMethod", "proofValue": "z2Kd…" }
+}</code></pre>
+</div>
+</section>
+
+<section id="example-anchor">
+<h3>An Anchor Commitment Referencing an ERC-8004 Validation</h3>
+<div class="example" data-title="AnchorCommitment">
+<pre><code>{
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "id": "urn:uuid:3f4a5b6c-7d8e-4f9a-8b0c-1d2e3f4a5b6c",
+  "type": ["VerifiableCredential", "AnchorCommitment"],
+  "issuer": "did:pkh:eip155:1:0x8ba1f109551bD432803012645Ac136ddd64DBA72",
+  "validFrom": "2026-09-03T18:00:00Z",
+  "credentialSubject": {
+    "id": "urn:uuid:3f4a5b6c-7d8e-4f9a-8b0c-1d2e3f4a5b6c",
+    "space": "did:web:rlvr.example",
+    "tree": "rfc6962",
+    "hashAlgorithm": "sha2-256",
+    "root": "uEiC9Ppq4uX1yZk2Mn3Ob4Rc5Sd6Te7Uf8Vg9Wh0Xi1Yj2Zk",
+    "count": 128,
+    "covered": { "uri": "https://rlvr.example/agtp/batches/2026-09-03T18.json",
+                 "cid": "bafkreigbatchmanifestcidxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+    "chain": "eip155:1",
+    "reference": {
+      "registry": "erc8004:validation",
+      "contract": "eip155:1:0x1234567890abcdef1234567890abcdef12345678",
+      "transaction": "0x9c0f…",
+      "requestHash": "0x5e1a…"
+    },
+    "anchoredAt": "2026-09-03T17:58:36Z"
+  },
+  "proof": { "type": "DataIntegrityProof", "cryptosuite": "eddsa-rdfc-2022",
+             "created": "2026-09-03T18:00:01Z",
+             "verificationMethod": "did:pkh:eip155:1:0x8ba1f109551bD432803012645Ac136ddd64DBA72#blockchainAccountId",
+             "proofPurpose": "assertionMethod", "proofValue": "z3Wf…" }
+}</code></pre>
+<p>An Anchor Commitment issued by a <code>did:pkh</code> identity would in practice use a cryptosuite for the wallet's key type; the Ed25519 baseline is shown for uniformity.</p>
+</div>
+</section>
+
+<section id="example-erc8004-feedback">
+<h3>An ERC-8004 Feedback File Carrying a Signal</h3>
+<div class="example" data-title="Off-chain feedback file with an agtp object">
+<pre><code>{
+  "agentRegistry": "eip155:1:0x1234567890abcdef1234567890abcdef12345678",
+  "agentId": 22,
+  "clientAddress": "eip155:1:0x8ba1f109551bD432803012645Ac136ddd64DBA72",
+  "createdAt": "2026-09-03T14:02:11Z",
+  "value": 90,
+  "valueDecimals": 2,
+  "tag1": "accuracy",
+  "tag2": "did:web:rlvr.example",
+  "endpoint": "https://mcp.solver.example/",
+  "mcp": { "tool": "run_sql" },
+  "agtp": {
+    "signal": "https://rlvr.example/.well-known/agtp/signals/uEiA4k3bQm1vZ2x0c3Q5Y2t4dGVzdGRhdGFhYWFhYWFhYWFhYWE",
+    "signalHash": "uEiA4k3bQm1vZ2x0c3Q5Y2t4dGVzdGRhdGFhYWFhYWFhYWFhYWE",
+    "space": "did:web:rlvr.example",
+    "provenance": "agtp://provenance?space=did:web:rlvr.example&amp;interaction=urn:uuid:6d2a…&amp;artifact=bafybeia…,bafybeib…"
+  }
+}</code></pre>
+<p>The on-chain feedback hash for this entry is the raw SHA-256 digest carried inside <code>signalHash</code>, so that a reader of the registry and a reader of the signal compute the same bytes.</p>
+</div>
+</section>
+
+<section id="example-distilled">
+<h3>A Distilled Persistent Signal with a Commitment</h3>
+<div class="example" data-title="Persistent summary of ephemeral reasoning checks">
+<pre><code>{
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "id": "urn:uuid:a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5e",
+  "type": ["VerifiableCredential", "LearningSignal"],
+  "issuer": "did:web:lab.example",
+  "validFrom": "2026-09-03T23:00:00Z",
+  "credentialSubject": {
+    "id": "did:web:solver.example",
+    "subject": "did:web:solver.example",
+    "space": "did:web:microcheck.example",
+    "dimensions": ["consistency", "grounding"],
+    "value": [0.87, 0.79],
+    "persistence": "persistent",
+    "provenance": "agtp://provenance?space=did:web:microcheck.example&amp;interaction=urn:uuid:d4e5f6a7-b8c9-4d0e-8f1a-2b3c4d5e6f7a&amp;artifact=bafybeiredactedtracecidxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "issuerRelation": "affiliate",
+    "commitment": "uEiBcommitmentrootoverephemeralsignalsxxxxxxxxxxxxxxxxxxxx",
+    "comment": "Distilled from 1,204 ephemeral step checks over P7D."
+  },
+  "credentialStatus": { "id": "https://lab.example/status/1#77", "type": "BitstringStatusListEntry",
+                        "statusPurpose": "revocation", "statusListIndex": "77",
+                        "statusListCredential": "https://lab.example/status/1" },
+  "proof": { "type": "DataIntegrityProof", "cryptosuite": "eddsa-rdfc-2022",
+             "created": "2026-09-03T23:00:01Z",
+             "verificationMethod": "did:web:lab.example#key-2",
+             "proofPurpose": "assertionMethod", "proofValue": "z6Nq…" }
+}</code></pre>
+</div>
+</section>
+
+<section id="example-a2a-card">
+<h3>An A2A Agent Card Declaring the AGTP Extension</h3>
+<div class="example" data-title="Agent Card extension declaration (excerpt)">
+<pre><code>{
+  "name": "Solver",
+  "description": "Solves quantitative questions against warehouse data.",
+  "url": "https://solver.example/a2a",
+  "version": "2.4.0",
+  "capabilities": {
+    "streaming": true,
+    "extensions": [
+      {
+        "uri": "https://schema.agtp.org/a2a/ext/v1",
+        "description": "AGTP identity, feedback service and evaluation Spaces",
+        "required": false,
+        "params": {
+          "did": "did:web:solver.example",
+          "feedbackService": "https://solver.example/.well-known/agtp/feedback",
+          "spaces": ["did:web:rlvr.example"]
+        }
+      }
+    ]
+  },
+  "skills": [
+    { "id": "run-sql", "name": "Run SQL", "description": "Read-only SQL over the sales warehouse.",
+      "tags": ["sql", "analytics"] }
+  ]
+}</code></pre>
+<p>Only the extension declaration is AGTP-specific; the remainder of the card is as A2A defines it, and the skill maps to the same capability identifier as the MCP tool in <a href="#example-capability-descriptor">A.1</a>.</p>
+</div>
+</section>
+
+<section id="example-skill">
+<h3>A Skill with AGTP Metadata</h3>
+<div class="example" data-title="SKILL.md frontmatter">
+<pre><code>---
+name: run-on-bq
+description: Execute a sanctioned BigQuery computation and return job_id, executed_sql and result. Use when an OKF attested computation names this skill as its executor.
+license: Apache-2.0
+compatibility: Requires the bq CLI and a service account with read access to the sales dataset
+metadata:
+  agtp-owner: did:web:solver.example
+  agtp-capability: urn:air:solver.example:skill:run-on-bq
+  agtp-space: did:web:rlvr.example
+---</code></pre>
+</div>
+</section>
+
+<section id="example-attested">
+<h3>An Attested Computation and Its Signal</h3>
+<div class="example" data-title="OKF attested computation (frontmatter) and the attester's signal">
+<pre><code>---
+type: Attested Computation
+title: Revenue for a fiscal year
+description: Recognised revenue for one fiscal year, per the revenue recognition policy.
+runtime: bigquery
+parameters:
+  - name: year
+    type: integer
+    required: true
+executor:
+  resource: /skills/run-on-bq.md
+  receipt: [job_id, executed_sql, result]
+attester:
+  resource: /attesters/sql_equality.py
+generated:
+  by: process:did:web:rlvr.example
+  at: 2026-08-28T10:00:00Z
+status: stable
+agtp:
+  space: did:web:rlvr.example
+---
+# Computation
+
+```sql
+SELECT SUM(amount) FROM `acme.sales.orders`
+WHERE EXTRACT(YEAR FROM recognised_at) = @year
+```</code></pre>
+<pre><code>{
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "id": "urn:uuid:5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+  "type": ["VerifiableCredential", "LearningSignal"],
+  "issuer": "did:web:attester.example",
+  "validFrom": "2026-09-03T14:05:00Z",
+  "credentialSubject": {
+    "id": "did:web:solver.example",
+    "subject": "did:web:solver.example",
+    "space": "did:web:rlvr.example",
+    "dimensions": ["attestation"],
+    "value": 1.0,
+    "persistence": "persistent",
+    "provenance": "agtp://provenance?space=did:web:rlvr.example&amp;interaction=urn:uuid:8e9f0a1b-2c3d-4e5f-8a6b-7c8d9e0f1a2b&amp;artifact=bafkreiconceptfilecidxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,bafkreireceiptfieldscidxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,bafkreiparameterscidxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "issuerRelation": "independent",
+    "comment": "sql_equality: executed_sql matches the sanctioned computation for year=2026; result reproduced."
+  },
+  "credentialStatus": { "id": "https://rlvr.example/.well-known/agtp/status?signal=uEiD…", "type": "AGTPSpaceStatus" },
+  "proof": { "type": "DataIntegrityProof", "cryptosuite": "eddsa-rdfc-2022",
+             "created": "2026-09-03T14:05:01Z",
+             "verificationMethod": "did:web:attester.example#key-1",
+             "proofPurpose": "assertionMethod", "proofValue": "z7Rs…" }
+}</code></pre>
+</div>
+</section>
+
+<section id="example-problem">
+<h3>A Problem Details Error</h3>
+<div class="example" data-title="422 response for an out-of-range value">
+<pre><code>HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json
+Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
+
+{
+  "type": "https://schema.agtp.org/problems/value-out-of-range",
+  "title": "Value out of range",
+  "status": 422,
+  "detail": "Dimension 'latency' is declared with range [0, 60]; received 94.5.",
+  "instance": "urn:uuid:0c9d7b5e-1f2a-4d3c-8e6f-7a5b4c3d2e1f",
+  "space": "did:web:rlvr.example",
+  "manifestHash": "uEiCz7m5gq4Vh2kQ2Jm7Y1Q2m3k6nJ1c2f4b7dq6l5o8q9pA"
+}</code></pre>
+</div>
+</section>
+</section>
+
+<section id="schemas" class="appendix">
+<h2>JSON Schemas</h2>
+<p>The schemas below are normative constraints on the JSON representation of AGTP objects, using JSON Schema 2020-12 <cite>[<a href="#bib-json-schema">JSON-SCHEMA</a>]</cite>. They deliberately permit additional properties, because AGTP objects are extensible JSON-LD; they check the presence and shape of what this specification requires. The prose of <a href="#core-objects">section 5</a> prevails where the two differ. The schemas are also published at <code>https://schema.agtp.org/json/</code> under the names given in each <code>$id</code>.</p>
+
+<section id="schema-learning-signal">
+<h3>Learning Signal</h3>
+<pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.agtp.org/json/learning-signal.schema.json",
+  "title": "AGTP Learning Signal (2.1)",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "credentialSubject", "credentialStatus", "proof"],
+  "anyOf": [ { "required": ["validFrom"] }, { "required": ["issuanceDate"] } ],
+  "properties": {
+    "@context": { "type": "array", "minItems": 2,
+      "contains": { "const": "https://schema.agtp.org/context/v2" } },
+    "id": { "type": "string", "format": "uri" },
+    "type": { "type": "array",
+      "allOf": [ { "contains": { "const": "VerifiableCredential" } },
+                 { "contains": { "enum": ["LearningSignal", "LearningSignalCredential"] } } ] },
+    "issuer": { "oneOf": [ { "type": "string", "pattern": "^did:" },
+                           { "type": "object", "required": ["id"],
+                             "properties": { "id": { "type": "string", "pattern": "^did:" } } } ] },
+    "validFrom": { "type": "string", "format": "date-time" },
+    "validUntil": { "type": "string", "format": "date-time" },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["subject", "space", "dimensions", "value", "persistence", "provenance"],
+      "properties": {
+        "id": { "type": "string", "format": "uri" },
+        "subject": { "type": "string", "format": "uri" },
+        "space": { "type": "string", "pattern": "^did:" },
+        "dimensions": { "type": "array", "minItems": 1,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" } },
+        "value": { "oneOf": [ { "type": "number" },
+                              { "type": "array", "minItems": 1, "items": { "type": "number" } } ] },
+        "persistence": { "enum": ["ephemeral", "persistent"] },
+        "provenance": { "type": "string", "pattern": "^agtp://provenance\\?.*space=.*&amp;?.*interaction=" },
+        "issuerRelation": { "enum": ["self", "affiliate", "independent"] },
+        "commitment": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "comment": { "type": "string", "maxLength": 1024 },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "manifestHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" }
+      },
+      "additionalProperties": true
+    },
+    "credentialStatus": {
+      "type": "object", "required": ["id", "type"],
+      "properties": { "type": { "enum": ["BitstringStatusListEntry", "AGTPSpaceStatus", "StatusList2021Entry"] } }
+    },
+    "credentialSchema": { "type": "object" },
+    "proof": { "oneOf": [ { "type": "object" }, { "type": "array", "items": { "type": "object" } } ] }
+  },
+  "additionalProperties": true
+}</code></pre>
+</section>
+
+<section id="schema-space-manifest">
+<h3>Space Manifest</h3>
+<pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.agtp.org/json/space-manifest.schema.json",
+  "title": "AGTP Space Manifest (2.1)",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "credentialSubject", "credentialStatus", "proof"],
+  "properties": {
+    "@context": { "type": "array", "minItems": 2 },
+    "id": { "type": "string", "format": "uri" },
+    "type": { "type": "array", "contains": { "enum": ["SpaceManifest", "SpaceManifestCredential"] } },
+    "issuer": { "type": "string", "pattern": "^did:" },
+    "validFrom": { "type": "string", "format": "date-time" },
+    "validUntil": { "type": "string", "format": "date-time" },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["id", "version", "manifestHash", "dimensions"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^did:" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" },
+        "manifestHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+        "dimensions": { "type": "array", "minItems": 1,
+          "items": { "type": "object", "required": ["id", "range", "higherIsBetter"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+              "range": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } },
+              "higherIsBetter": { "type": "boolean" },
+              "unit": { "type": "string" },
+              "ref": { "type": "string", "format": "uri" } } } },
+        "dimensionRefs": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "aggregation": { "oneOf": [
+          { "$ref": "#/$defs/aggregation" },
+          { "type": "array", "items": { "$ref": "#/$defs/aggregation" } } ] },
+        "persistence_policy": { "type": "object" },
+        "status": { "type": "string", "format": "uri" },
+        "revocation": { "type": "string", "format": "uri" },
+        "capabilities": { "type": "object" },
+        "knowledge": { "type": "array", "items": { "type": "object", "required": ["resource", "cid"],
+          "properties": { "resource": { "type": "string", "format": "uri" }, "cid": { "type": "string" },
+                          "okf_version": { "type": "string" },
+                          "role": { "enum": ["dimensions", "policy", "documentation", "corpus"] } } } },
+        "discovery": { "type": "object", "properties": {
+          "ard": { "type": "string", "pattern": "^urn:air:" },
+          "registries": { "type": "array", "items": { "type": "string", "format": "uri" } } } },
+        "admission": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "credentialStatus": { "type": "object", "required": ["id", "type"] },
+    "proof": { "type": "object" }
+  },
+  "$defs": {
+    "aggregation": { "type": "object", "required": ["name"],
+      "properties": { "name": { "type": "string" }, "parameters": { "type": "object" },
+                      "impl": { "type": "string", "format": "uri" },
+                      "dimensions": { "type": "array", "items": { "type": "string" } } } }
+  },
+  "additionalProperties": true
+}</code></pre>
+</section>
+
+<section id="schema-receipt">
+<h3>Receipt</h3>
+<pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.agtp.org/json/receipt.schema.json",
+  "title": "AGTP Receipt (2.1)",
+  "type": "object",
+  "required": ["receiptId", "signalHash", "acceptState", "receivedAt"],
+  "properties": {
+    "receiptId": { "type": "string", "format": "uri" },
+    "signalId": { "type": "string", "format": "uri" },
+    "signalHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+    "acceptState": { "enum": ["accepted", "rejected", "pending"] },
+    "reason": { "type": "string" },
+    "receivedAt": { "type": "string", "format": "date-time" },
+    "receiver": { "type": "string", "pattern": "^did:" },
+    "space": { "type": "string", "pattern": "^did:" },
+    "nonce": { "type": "string" },
+    "idempotencyKey": { "type": "string", "format": "uuid" }
+  },
+  "if": { "properties": { "acceptState": { "const": "rejected" } } },
+  "then": { "required": ["reason"] },
+  "additionalProperties": true
+}</code></pre>
+</section>
+
+<section id="schema-capability-descriptor">
+<h3>Capability Descriptor</h3>
+<pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.agtp.org/json/capability-descriptor.schema.json",
+  "title": "AGTP Capability Descriptor (2.1)",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
+  "properties": {
+    "type": { "type": "array", "contains": { "enum": ["CapabilityDescriptor", "CapabilityDescriptorCredential"] } },
+    "issuer": { "type": "string", "pattern": "^did:" },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["id", "owner", "name", "interfaceType", "contentHash"],
+      "properties": {
+        "id": { "type": "string", "format": "uri" },
+        "owner": { "type": "string", "pattern": "^did:" },
+        "name": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string" },
+        "interfaceType": { "type": "string",
+          "anyOf": [ { "enum": ["mcp-tool", "mcp-resource", "mcp-prompt", "a2a-skill", "api-tool",
+                                "agent-skill", "okf-computation", "policy-only"] },
+                     { "pattern": "^x-[a-z0-9-]+$" } ] },
+        "interface": { "type": "object", "properties": {
+          "protocol": { "type": "string" }, "version": { "type": "string" },
+          "schemaHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+          "bindings": { "type": "array", "items": { "type": "object", "required": ["protocol"] } } } },
+        "inputSchema": { "oneOf": [ { "type": "object" }, { "type": "string", "format": "uri" } ] },
+        "outputSchema": { "oneOf": [ { "type": "object" }, { "type": "string", "format": "uri" } ] },
+        "constraints": { "type": "object" },
+        "sourceArtifacts": { "type": "array", "items": { "$ref": "#/$defs/artifactRef" } },
+        "version": { "type": "string" },
+        "contentHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+        "discovery": { "type": "object" },
+        "spaces": { "type": "array", "items": { "type": "string", "pattern": "^did:" } }
+      },
+      "if": { "properties": { "interfaceType": { "const": "policy-only" } } },
+      "else": { "required": ["interface"] },
+      "additionalProperties": true
+    },
+    "proof": { "type": "object" }
+  },
+  "$defs": {
+    "artifactRef": { "type": "object", "required": ["cid"],
+      "properties": { "cid": { "type": "string" }, "uri": { "type": "string", "format": "uri" },
+                      "role": { "type": "string" }, "mediaType": { "type": "string" } } }
+  },
+  "additionalProperties": true
+}</code></pre>
+</section>
+
+<section id="schema-anchor-commitment">
+<h3>Anchor Commitment</h3>
+<pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.agtp.org/json/anchor-commitment.schema.json",
+  "title": "AGTP Anchor Commitment (2.1)",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
+  "properties": {
+    "type": { "type": "array", "contains": { "enum": ["AnchorCommitment", "AnchorCommitmentCredential"] } },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["id", "root", "tree", "hashAlgorithm", "covered", "count", "reference", "anchoredAt"],
+      "properties": {
+        "id": { "type": "string", "format": "uri" },
+        "root": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+        "tree": { "type": "string" },
+        "hashAlgorithm": { "type": "string" },
+        "covered": { "oneOf": [
+          { "type": "array", "items": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" } },
+          { "type": "object", "required": ["uri", "cid"] } ] },
+        "count": { "type": "integer", "minimum": 1 },
+        "space": { "type": "string", "pattern": "^did:" },
+        "chain": { "type": "string", "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$" },
+        "reference": { "type": "object" },
+        "anchoredAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}</code></pre>
+</section>
+
+<section id="schema-observation-record">
+<h3>Observation Record</h3>
+<pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.agtp.org/json/observation-record.schema.json",
+  "title": "AGTP Observation Record (2.1)",
+  "type": "object",
+  "required": ["type", "id", "space", "actor", "sourceProtocol", "sourceRefs", "interaction", "observedAt", "privacyClass"],
+  "properties": {
+    "type": { "type": "array", "contains": { "const": "ObservationRecord" } },
+    "id": { "type": "string", "format": "uri" },
+    "space": { "type": "string", "pattern": "^did:" },
+    "actor": { "type": "string", "pattern": "^did:" },
+    "subject": { "type": "string", "format": "uri" },
+    "sourceProtocol": { "type": "string" },
+    "sourceVersion": { "type": "string" },
+    "sourceRefs": { "type": "object" },
+    "interaction": { "type": "string", "format": "uri" },
+    "artifacts": { "type": "array", "items": { "type": "object", "required": ["cid"] } },
+    "provenance": { "type": "string", "pattern": "^agtp://provenance\\?" },
+    "capabilityRefs": { "type": "array", "items": { "type": "object", "required": ["id", "contentHash"] } },
+    "policyRefs": { "type": "array" },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "privacyClass": { "enum": ["ephemeral", "persistent", "redacted", "committed-only"] },
+    "claims": { "type": "object" },
+    "proof": { "type": "object" }
+  },
+  "additionalProperties": true
+}</code></pre>
+</section>
+
+<section id="schema-did-service">
+<h3>DID Document Service Entries</h3>
+<pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.agtp.org/json/did-service.schema.json",
+  "title": "AGTP service entries in a DID Document",
+  "type": "object",
+  "required": ["id", "type", "serviceEndpoint"],
+  "properties": {
+    "id": { "type": "string", "format": "uri" },
+    "type": { "enum": ["AGTPFeedbackService", "AGTPSpaceManifest", "AGTPCapabilities",
+                       "AGTPSignalIndex", "AgenticResourceDiscovery", "MCPServer", "A2AAgentCard"] },
+    "serviceEndpoint": { "oneOf": [
+      { "type": "string", "format": "uri", "pattern": "^https://" },
+      { "type": "object", "required": ["uri"],
+        "properties": { "uri": { "type": "string", "format": "uri", "pattern": "^https://" } },
+        "additionalProperties": true } ] }
+  },
+  "additionalProperties": true
+}</code></pre>
+</section>
+</section>

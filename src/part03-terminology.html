@@ -1,0 +1,74 @@
+<section id="terminology">
+<h2>Terminology</h2>
+<p>This section defines the terms used in this specification. Terms defined by referenced specifications keep their meaning there; where AGTP narrows a term, the narrowing is stated.</p>
+<dl class="dl-terms">
+<dt><dfn id="dfn-agent">agent</dfn></dt>
+<dd>Any actor—human, service, model or hybrid—identified by a <a class="term" href="#dfn-did">DID</a> and able to issue or receive Learning Signals. An agent's DID Document advertises its <a class="term" href="#dfn-feedback-service">feedback service</a>.</dd>
+<dt><dfn id="dfn-agent-graph">agent graph</dfn></dt>
+<dd>The directed, typed graph whose nodes are agents, Spaces, capabilities, interactions, artifacts, observations, signals, receipts and anchors, and whose edges are the relationships this specification defines between them (<a href="#graph-model">section 4.1</a>). No single party holds the whole graph; it emerges from the union of published objects.</dd>
+<dt><dfn id="dfn-space">Space</dfn></dt>
+<dd>A DID-addressed policy domain, or context subgraph, that declares how feedback within it is interpreted: which dimensions are valid, how signals aggregate, what persists and where status is published. Also called a <em>context</em>.</dd>
+<dt><dfn id="dfn-space-manifest">Space Manifest</dfn></dt>
+<dd>The signed Verifiable Credential in which a Space declares its policy (<a href="#space-manifest">section 5.2</a>).</dd>
+<dt><dfn id="dfn-learning-signal">Learning Signal</dfn></dt>
+<dd>A Verifiable Credential encoding evaluative feedback about a <a class="term" href="#dfn-subject">subject</a> within a Space along one or more <a class="term" href="#dfn-dimension">dimensions</a>, bound to a <a class="term" href="#dfn-provenance-uri">provenance URI</a> (<a href="#learning-signal">section 5.3</a>). The atomic unit of feedback. Also called a <em>signal</em>.</dd>
+<dt><dfn id="dfn-subject">subject</dfn></dt>
+<dd>The entity a Learning Signal is about: an agent, a capability, an artifact, an interaction or a knowledge concept, identified by a DID or URI.</dd>
+<dt><dfn id="dfn-dimension">dimension</dfn></dt>
+<dd>A named evaluation axis with a declared range, direction and optional unit. Dimensions are declared per Space; the protocol fixes no global set.</dd>
+<dt><dfn id="dfn-dimension-registry">dimension registry</dfn></dt>
+<dd>A published collection of dimension definitions that Space Manifests may reference by URI. This specification recommends publishing registries as OKF bundles (<a href="#knowledge-dimensions">section 8.4</a>).</dd>
+<dt><dfn id="dfn-artifact">artifact</dfn></dt>
+<dd>Any content-addressed resource implicated in an interaction: an input, an output, a trace, a model version, a dataset, a tool schema, a policy file or a knowledge document. Artifacts are referenced by <a class="term" href="#dfn-cid">CID</a> and may be public, redacted or private.</dd>
+<dt><dfn id="dfn-interaction">interaction</dfn></dt>
+<dd>A bounded unit of activity within a Space—a run, task, session, message exchange or tool call—with a stable identifier that provenance can refer to.</dd>
+<dt><dfn id="dfn-observation">observation</dfn></dt>
+<dd>A raw or normalised record of something that happened during an interaction, before any evaluation: an event, a measurement, a status transition, a usage figure. Observations are evidence, not judgments (<a href="#observation-record">section 5.7</a>).</dd>
+<dt><dfn id="dfn-receipt">receipt</dfn></dt>
+<dd>The acknowledgement returned by a feedback service or Space when a signal is delivered, carrying the signal's hash and acceptance state (<a href="#receipt">section 5.4</a>). When signed it is an Interaction Receipt credential.</dd>
+<dt><dfn id="dfn-capability">capability</dfn></dt>
+<dd>A declared ability of an agent, with its interface, constraints and source artifacts: an MCP tool, resource or prompt; an A2A skill; an API function; an Agent Skill; an OKF attested computation.</dd>
+<dt><dfn id="dfn-capability-descriptor">Capability Descriptor</dfn></dt>
+<dd>The Verifiable Credential in which an agent describes one capability in the normalised AGTP form (<a href="#capability-descriptor">section 5.5</a>).</dd>
+<dt><dfn id="dfn-anchor">anchor</dfn></dt>
+<dd>A commitment to a batch of AGTP objects recorded outside AGTP, typically on a ledger or registry, for timestamping and censorship resistance. Described by an Anchor Commitment credential (<a href="#anchor-commitment">section 5.6</a>).</dd>
+<dt><dfn id="dfn-provenance-uri">provenance URI</dfn></dt>
+<dd>A URI in the <code>agtp://provenance</code> scheme that binds a Space, an interaction and zero or more artifacts, allowing an evaluation to be reproduced or audited (<a href="#provenance-uri">section 3.5</a>).</dd>
+<dt><dfn id="dfn-feedback-service">feedback service</dfn></dt>
+<dd>The endpoint, advertised in an agent's DID Document as a service of type <code>AGTPFeedbackService</code>, that accepts delivered signals and returns receipts. Its presence is what makes an agent evaluable.</dd>
+<dt><dfn id="dfn-ephemeral-signal">ephemeral signal</dfn></dt>
+<dd>A signal whose <code>persistence</code> is <code>ephemeral</code>: intended for local or private learning, subject to retention ceilings, and not indexed publicly.</dd>
+<dt><dfn id="dfn-persistent-signal">persistent signal</dfn></dt>
+<dd>A signal whose <code>persistence</code> is <code>persistent</code>: public, discoverable, reproducible via provenance, and eligible for aggregation and anchoring.</dd>
+<dt><dfn id="dfn-distillation">distillation</dfn></dt>
+<dd>The process of summarising a set of ephemeral signals into a persistent signal, optionally with a <a class="term" href="#dfn-commitment">commitment</a> to the set.</dd>
+<dt><dfn id="dfn-commitment">commitment</dfn></dt>
+<dd>A Merkle root or equivalent cryptographic commitment over a set of objects that allows later selective disclosure without publishing the set.</dd>
+<dt><dfn id="dfn-issuer-relation">issuer relation</dfn></dt>
+<dd>The declared relationship between a signal's issuer and its subject: <code>self</code>, <code>affiliate</code> or <code>independent</code>. A hint for aggregation policy, not a proof of independence.</dd>
+<dt><dfn id="dfn-aggregation">aggregation</dfn></dt>
+<dd>The rule, declared in a Space Manifest, by which a Space combines signals into scores or ranks. The reference default is a trust-weighted average over a sliding window (<a href="#aggregation">section 11</a>).</dd>
+<dt><dfn id="dfn-signal-hash">signalHash</dfn></dt>
+<dd>The canonical hash of a signal, computed as a multihash over the RDF Dataset Canonicalization of the unsecured credential (<a href="#hashing">section 10.2</a>). Used for deduplication, receipts and anchoring.</dd>
+<dt><dfn id="dfn-nonce">nonce</dfn></dt>
+<dd>A single-use value issued by a feedback service and echoed by the sender to prevent replay (<a href="#http-nonce">section 9.2</a>).</dd>
+<dt><dfn id="dfn-idempotency-key">idempotency key</dfn></dt>
+<dd>A sender-chosen unique key that lets a feedback service recognise and reject duplicate deliveries within a window.</dd>
+<dt><dfn id="dfn-binding-profile">binding profile</dfn></dt>
+<dd>A normative mapping from an external standard's objects and events to AGTP objects, together with the identifiers each side preserves (<a href="#profiles">section 12</a>). Profiles never alter the external standard.</dd>
+<dt><dfn id="dfn-gateway-identity">gateway identity</dfn></dt>
+<dd>A DID operated by an intermediary on behalf of a participant that does not natively hold a DID, such as a legacy API client or an A2A agent without one. The gateway's DID Document or a delegation credential records the mapping.</dd>
+<dt><dfn id="dfn-did">DID</dfn>, <dfn id="dfn-did-document">DID Document</dfn>, <dfn id="dfn-controller">controller</dfn>, <dfn id="dfn-verification-method">verification method</dfn>, <dfn id="dfn-service">service</dfn></dt>
+<dd>As defined in <cite>[<a href="#bib-did-core">DID-CORE</a>]</cite>.</dd>
+<dt><dfn id="dfn-verifiable-credential">verifiable credential</dfn>, <dfn id="dfn-issuer">issuer</dfn>, <dfn id="dfn-proof">proof</dfn>, <dfn id="dfn-cryptosuite">cryptosuite</dfn>, <dfn id="dfn-credential-status">credential status</dfn></dt>
+<dd>As defined in <cite>[<a href="#bib-vc-data-model">VC-DATA-MODEL-2.0</a>]</cite> and <cite>[<a href="#bib-vc-data-integrity">VC-DATA-INTEGRITY</a>]</cite>.</dd>
+<dt><dfn id="dfn-cid">CID</dfn></dt>
+<dd>A self-describing content identifier as defined by the multiformats CID specification <cite>[<a href="#bib-cid">CID</a>]</cite>. AGTP requires CIDv1 in a multibase encoding.</dd>
+<dt><dfn id="dfn-ard-entry">ARD entry</dfn>, <dfn id="dfn-ard-registry">registry</dfn>, <dfn id="dfn-trust-manifest">trust manifest</dfn></dt>
+<dd>As defined in <cite>[<a href="#bib-ard">ARD</a>]</cite>: a JSON-LD description of an agentic resource published at a well-known path; a service that indexes entries and answers search queries; and the optional object in an entry that names the identity framework and attestations by which the entry can be verified.</dd>
+<dt><dfn id="dfn-okf-bundle">OKF bundle</dfn>, <dfn id="dfn-okf-concept">concept</dfn>, <dfn id="dfn-okf-actor">actor</dfn>, <dfn id="dfn-attested-computation">attested computation</dfn></dt>
+<dd>As defined in <cite>[<a href="#bib-okf">OKF</a>]</cite>: a directory tree of Markdown files with YAML frontmatter; one file describing one entity; the identifier convention for the people, agents and processes that generate and verify concepts; and the concept type whose body is a sanctioned computation with an executor and a deterministic attester.</dd>
+<dt><dfn id="dfn-evaluator">evaluator</dfn></dt>
+<dd>An agent, human or service that issues Learning Signals. A <dfn id="dfn-verifier">verifier</dfn> is an evaluator whose signals derive from reproducible checks rather than preference.</dd>
+</dl>
+</section>

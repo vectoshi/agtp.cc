@@ -1,0 +1,130 @@
+<section id="versioning">
+<h2>Versioning, Extensibility and Governance</h2>
+
+<section id="version-semantics">
+<h3>Version Semantics</h3>
+<p>AGTP uses semantic versioning. This document specifies AGTP 2.1.0. A PATCH increment corrects text without changing conformance; a MINOR increment adds optional properties, resources, profiles or conformance classes without breaking existing conformant implementations; a MAJOR increment may change wire semantics. The version an implementation supports is advertised as <code>agtpVersion</code> in its capabilities document, and profiles are negotiated by their registered identifiers. An implementation that receives an object from a later MINOR version MUST process the properties it understands and ignore the rest.</p>
+</section>
+
+<section id="migration">
+<h3>Migration from AGTP v2</h3>
+<p>The following changes are compatibility-managed. Consumers MUST accept both forms for an overlap window of at least twelve months after this specification becomes a Consortium Recommendation; producers SHOULD emit the 2.1 form and MAY dual-serve manifests.</p>
+<div class="table-wrap">
+<table>
+<caption>Compatibility-managed changes from v2</caption>
+<thead><tr><th>Aspect</th><th>AGTP v2</th><th>AGTP 2.1</th></tr></thead>
+<tbody>
+<tr><td>Base credential context</td><td><code>https://www.w3.org/2018/credentials/v1</code></td><td><code>https://www.w3.org/ns/credentials/v2</code></td></tr>
+<tr><td>AGTP context</td><td><code>https://schema.agtp.org/context/v1</code></td><td><code>https://schema.agtp.org/context/v2</code> (v1 remains served)</td></tr>
+<tr><td>Issuance time</td><td><code>issuanceDate</code></td><td><code>validFrom</code></td></tr>
+<tr><td>Manifest validity</td><td><code>credentialSubject.validFrom</code> / <code>validUntil</code></td><td>credential-level <code>validFrom</code> / <code>validUntil</code>; MAY be mirrored in the subject</td></tr>
+<tr><td>Proof</td><td><code>Ed25519Signature2020</code> over URDNA2015</td><td><code>DataIntegrityProof</code> with <code>eddsa-rdfc-2022</code></td></tr>
+<tr><td>Status</td><td><code>StatusList2021Entry</code></td><td><code>BitstringStatusListEntry</code> or <code>AGTPSpaceStatus</code></td></tr>
+<tr><td>Media type</td><td><code>application/vc+json</code></td><td><code>application/vc</code></td></tr>
+<tr><td>Capabilities keys</td><td><code>signatureSuites</code></td><td><code>cryptosuites</code> (legacy key MAY be present)</td></tr>
+<tr><td>HTTP profile identifier</td><td><code>http/1.0</code></td><td><code>http/1.1</code> (superset)</td></tr>
+<tr><td>Hashing identifier</td><td><code>URDNA2015+multihash</code></td><td><code>rdfc-1.0+sha2-256</code> (same computation)</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="extensibility-governance">
+<h3>Extensibility</h3>
+<p>The extension mechanisms are those of <a href="#extensibility">section 4.4</a>: new terms in separate namespaces, new dimensions declared by Spaces, and new entries in the registries of <a href="#registries">Appendix F</a>. Transport profiles, cryptosuites and binding profiles MAY be standardised separately without changing the core invariants, and a profile MAY advance on its own version track.</p>
+</section>
+
+<section id="change-process">
+<h3>Change Process</h3>
+<p>The protocol is mechanism only; policy stays in Spaces. The AGTP Consortium convenes editors, maintains the registries and publishes the specification. It has no binding authority over any Space, registry or implementation, and this specification creates none. Changes proceed as follows: a written proposal with rationale; a reference implementation; conformance tests added to <a href="#conformance-descriptors">Appendix D</a>; and release. A MINOR increment requires two independent implementations of each new normative feature. A MAJOR increment requires a deprecation schedule, migration tooling and an overlap window during which manifests are dual-served and clients negotiate through the capabilities resource. Non-goals remain as in v2: no global governance mandate, no council with binding authority, no privileged registry.</p>
+</section>
+
+<section id="space-parameters">
+<h3>Space-Controlled Parameters</h3>
+<p><em>This section is non-normative.</em> Examples of what a Space controls without any protocol change: the aggregation window, minimum raters and issuer caps; issuer-relation weights; eligibility gates such as uptime or acceptance rates; deposits and refundable stakes against spam; dispute windows and the meaning of <code>pending</code>; dimension registries and extension namespaces; the privacy class of traces; which ARD registries it recognises; which knowledge bundles it pins; and whether it anchors, where, and how often.</p>
+</section>
+</section>
+
+<section id="security" class="informative">
+<h2>Security Considerations</h2>
+<p>AGTP's security stance is verification, not belief. The protocol gives every party the means to check identity, proof, status and provenance; it does not ask anyone to trust a registry, a score or a counterparty. This section describes the threats the design anticipates, the hooks the protocol provides against each and the policy levers Spaces are expected to use. Requirements cited here are normative where they appear in earlier sections.</p>
+
+<section id="security-threat-model">
+<h3>Threat Model</h3>
+<div class="table-wrap">
+<table>
+<caption>Threats, protocol hooks and policy levers</caption>
+<thead><tr><th>Threat</th><th>Attacker goal</th><th>Protocol hooks</th><th>Policy levers</th><th>Residual risk</th></tr></thead>
+<tbody>
+<tr><td>Sybil</td><td>Inflate influence with many cheap identities</td><td>DID requirement; <code>signalHash</code> deduplication; status and revocation; signed manifests; <code>issuerRelation</code></td><td>Admission, deposits, issuer-diversity thresholds, <code>minRaters</code>, <code>maxWeightPerIssuer</code></td><td>Collusion across organisations when attribution is weak</td></tr>
+<tr><td>Collusion and rating rings</td><td>Reciprocal boosting; down-rating rivals</td><td>Provenance grammar; receipts; distinct-issuer counts published with aggregates</td><td>Windowed aggregation, diversity constraints, anomaly detection, audits</td><td>Rings that mimic organic patterns</td></tr>
+<tr><td>Reward hacking</td><td>Optimise the metric, not the task</td><td><code>issuerRelation</code>; dimension semantics with range and direction; reproducible provenance; deterministic attesters</td><td>Adversarial test injection, tournament cross-checks, evaluator reputation, holdout rotation</td><td>Metric drift as tasks evolve</td></tr>
+<tr><td>Provenance spoofing</td><td>Claim results not achieved</td><td>Content addressing; canonical hashing; anchoring</td><td>Mandatory re-execution for top-ranked subjects; dispute windows</td><td>Private artifacts limit public re-runs</td></tr>
+<tr><td>Replay and duplicates</td><td>Inflate weight by resubmission</td><td>Nonces; idempotency keys; <code>signalHash</code> deduplication</td><td>Sliding windows; per-issuer rate limits</td><td>Races during partitions</td></tr>
+<tr><td>Catalog spoofing</td><td>Impersonate a provider in discovery</td><td>Mutual DID–domain binding; attestation verification; <code>agtp:verified</code> only from registries that checked</td><td>Preferred registries per Space; refusal to deliver to unverified endpoints</td><td>Compromised domains or DID hosting</td></tr>
+<tr><td>Registry poisoning and rank gaming</td><td>Make bad resources look chosen</td><td>Relevance score decoupled from trust; aggregates cite Space, count, window and <code>manifestHash</code></td><td>Recomputation from the signal index; federation source tracking</td><td>Registries that ignore the rule</td></tr>
+<tr><td>Knowledge poisoning</td><td>Corrupt what agents believe</td><td>Bundle and concept CIDs; signals on concepts; attested computations; bodies treated as data</td><td>Human-reviewed tiers required for critical concepts; staleness enforcement</td><td>Subtle errors that pass attesters</td></tr>
+<tr><td>Tool description injection</td><td>Steer agents through tool metadata</td><td>Hash-bound descriptors; descriptions treated as data; signals on capabilities</td><td>Dimensions for injection; allow-lists per Space</td><td>Novel injection forms</td></tr>
+<tr><td>Eclipse and partitions</td><td>Isolate victims; fork views</td><td>Manifest caching with <code>ETag</code> and <code>validUntil</code>; timestamped receipts; degraded-mode signalling; anchoring</td><td>Grace windows; quorum re-confirmation for critical scores</td><td>Short-lived inconsistencies while healing</td></tr>
+<tr><td>Key compromise</td><td>Issue signals as another party</td><td>Verification-relationship checks; DID method history; status revocation</td><td>Emergency invalidation through the Space status resource</td><td>Signals issued before detection</td></tr>
+<tr><td>Governance capture</td><td>Control semantics or manifests</td><td>Signed, versioned manifests; version pinning; multiple registries; client choice</td><td>Mirrors; deprecation windows</td><td>Soft capture through popularity</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="security-identity">
+<h3>Identity and Authentication</h3>
+<p>Every claim's authority derives from a DID. Verifiers should resolve DIDs afresh rather than from stale caches when a proof fails, should honour method-level deactivation, and should not accept a proof whose verification method is not listed under <code>assertionMethod</code> however plausible the key. Feedback services authenticate senders separately from verifying issuers; conflating the two invites an attacker who controls a transport credential to inject signals signed by no one.</p>
+</section>
+
+<section id="security-discovery">
+<h3>Discovery</h3>
+<p>Discovery is the point at which an agent decides whom to talk to, and therefore where an attacker most wants to stand. The mutual-binding rule of <a href="#discovery-verifying">section 7.2</a> means that an entry is only as trustworthy as the weaker of DNS control and DID control, and deployments should treat both as security-critical. Consumers should never deliver signals to an endpoint learned solely from an unverified entry, should prefer registries a Space names, and should treat any ranking that a registry cannot justify from a signal index as advertising.</p>
+</section>
+
+<section id="security-knowledge">
+<h3>Knowledge and Tools</h3>
+<p>Knowledge documents and tool descriptions are the two channels through which text reaches an agent's reasoning from outside its trust boundary. AGTP's rule that both are data, never protocol operations, must be enforced in implementations, not merely in policy; and Spaces that care about it should score for it, so that a description or a concept that attempts injection accumulates a record. Content addressing ensures that an injected change is at least a visible change: a descriptor's <code>contentHash</code> and a concept's CID move when the text moves.</p>
+</section>
+
+<section id="security-reproducibility">
+<h3>Reproducibility and Anchoring</h3>
+<p>Reproducibility is the strongest defence the protocol offers, and it is only as strong as artifact availability. Spaces should require public or escrowed artifacts for signals that feed high-stakes aggregates, should re-execute a sample, and should treat signals whose artifacts have become unavailable as weaker evidence over time. Anchoring adds timestamping and censorship resistance, not truth: an anchored lie is a lie with a date. Anchor commitments therefore carry only hashes, and consumers verify the underlying objects as they would without the anchor.</p>
+</section>
+</section>
+
+<section id="privacy" class="informative">
+<h2>Privacy Considerations</h2>
+<p>AGTP is designed so that private learning and public coordination can coexist. The mechanisms are the ephemeral and persistent classes, distillation with commitments, redaction with attestations and content addressing that lets a party prove what it evaluated without publishing it. This section describes the privacy risks that remain and the practices that mitigate them.</p>
+
+<section id="privacy-classes">
+<h3>Ephemeral and Persistent Signals</h3>
+<p>Ephemeral signals are for local learning and carry retention ceilings set by the Space. They are never indexed and need not leave the parties to an interaction. Persistent signals are public by intent: they are discoverable, aggregated and possibly anchored. The decision to distil ephemeral signals into a persistent one is the point at which private detail becomes public summary, and the commitment carried by the summary is what allows an auditor to be shown the detail selectively later. Implementations should default to ephemeral and require an explicit act to persist.</p>
+</section>
+
+<section id="privacy-minimisation">
+<h3>Data Minimisation</h3>
+<p>A signal needs a subject, a Space, dimensions, values and provenance. It does not need a narrative. The <code>comment</code> property, observation <code>claims</code> and <code>sourceRefs</code> are the places where personal data is most likely to leak, and producers should keep them minimal, should not copy prompts or user text into them, and should let Space policy decide whether traces are raw, redacted or committed-only. OKF <code>sources</code> entries and <code>resource</code> URIs can expose internal system names and usage patterns; publishers should redact internal locators from public bundles and treat usage counts as quasi-identifiers.</p>
+</section>
+
+<section id="privacy-correlation">
+<h3>Correlation</h3>
+<p>A DID that issues signals across many Spaces is a correlation handle. Human evaluators and small organisations should consider pairwise or per-Space DIDs, and Spaces should accept <code>did:key</code> issuers with a delegation credential where accountability requires it. Aggregators should publish distinct-issuer counts, not issuer lists, and should apply <code>minRaters</code> so that an aggregate never reveals a single evaluator's judgment. Registries index public entries only and should not accumulate query logs that reveal which agent sought which capability.</p>
+</section>
+
+<section id="privacy-humans">
+<h3>Human Participants</h3>
+<p>Signals issued through interfaces are judgments by people. Gateways that issue them on a person's behalf should hold a delegation the person granted and should not attribute more precision to a judgment than the interface captured. Herd privacy is served when the interface batches judgments into a distilled signal rather than emitting one per click.</p>
+</section>
+
+<section id="privacy-anchoring">
+<h3>Anchoring and Erasure</h3>
+<p>Ledgers do not forget. Anchor commitments therefore contain hashes and counts only, and an anchored signal that is later revoked remains revoked in AGTP even though its hash remains on the ledger. Publishers should not anchor ephemeral signals, and should be aware that a hash of a small, guessable document is not a strong commitment to its secrecy.</p>
+</section>
+
+<section id="privacy-aggregates">
+<h3>Aggregate Disclosure</h3>
+<p>Published aggregates can reveal individual signals when few issuers contribute. Beyond <code>minRaters</code>, Spaces may add noise to public leaderboards, apply k-anonymity thresholds to subgroup breakdowns and use privacy-preserving aggregation as it matures (<a href="#future-work">Appendix H</a>). These are aggregation parameters, not protocol changes.</p>
+</section>
+</section>

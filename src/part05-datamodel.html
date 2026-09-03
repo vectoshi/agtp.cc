@@ -1,0 +1,81 @@
+<section id="data-model">
+<h2>Data Model</h2>
+<p>The AGTP data model is a graph of typed objects. Portable claims about the graph are Verifiable Credentials drawn from a small credential family. Runtime evidence that does not warrant a credential is carried in a lightweight observation record. Both are JSON-LD documents whose vocabulary is defined by the AGTP context, and both are hashed and signed with the mechanisms of <a href="#crypto">section 10</a>.</p>
+
+<section id="graph-model">
+<h3>The Agent Graph</h3>
+<p>The following table lists the node kinds of the agent graph, how each is identified and which AGTP object describes it. Edges are the properties of those objects: a Learning Signal is an edge from its issuer to its subject, labelled with a Space, dimensions and values; a Capability Descriptor is an edge from an owner to a capability; a Receipt is an edge from a receiver to a signal; an Anchor is an edge from a ledger record to a set of signals.</p>
+<div class="table-wrap">
+<table>
+<caption>Node kinds of the agent graph</caption>
+<thead><tr><th>Node</th><th>Identified by</th><th>Described by</th><th>Typical sources</th></tr></thead>
+<tbody>
+<tr><td>Agent</td><td>DID</td><td>DID Document (<a href="#agent-did-document">§5.1</a>)</td><td>Any participant; MCP servers, A2A agents, API gateways, humans</td></tr>
+<tr><td>Space</td><td>DID</td><td>Space Manifest (<a href="#space-manifest">§5.2</a>)</td><td>Communities, marketplaces, benchmarks, organisations</td></tr>
+<tr><td>Capability</td><td>URI (often an ARD URN)</td><td>Capability Descriptor (<a href="#capability-descriptor">§5.5</a>)</td><td>MCP tools, resources and prompts; A2A skills; API functions; Agent Skills; OKF attested computations</td></tr>
+<tr><td>Interaction</td><td>URI (UUID URN recommended)</td><td>Observation Records (<a href="#observation-record">§5.7</a>)</td><td>A2A tasks, MCP calls, model-API runs, A2UI sessions</td></tr>
+<tr><td>Artifact</td><td>CID</td><td>Artifact references in signals, observations and descriptors</td><td>Inputs, outputs, traces, schemas, policies, OKF documents</td></tr>
+<tr><td>Observation</td><td>URI</td><td>Observation Record (<a href="#observation-record">§5.7</a>)</td><td>Events, measurements, usage, status transitions</td></tr>
+<tr><td>Learning Signal</td><td>URI and <code>signalHash</code></td><td>Learning Signal credential (<a href="#learning-signal">§5.3</a>)</td><td>Evaluators: humans, verifiers, tournaments, attesters</td></tr>
+<tr><td>Receipt</td><td>URI</td><td>Receipt, optionally an Interaction Receipt credential (<a href="#receipt">§5.4</a>)</td><td>Feedback services and Spaces</td></tr>
+<tr><td>Anchor</td><td>URI</td><td>Anchor Commitment credential (<a href="#anchor-commitment">§5.6</a>)</td><td>ERC-8004 registries, other ledgers, timestamping services</td></tr>
+</tbody>
+</table>
+</div>
+<p>The graph has no root and no single custodian. An implementation's view of it is the union of the objects it has verified. Consumers MUST NOT infer an edge from an object whose proof or status fails verification, and MUST distinguish edges asserted by credentials from edges suggested by unsigned observations.</p>
+</section>
+
+<section id="credential-family">
+<h3>The Credential Family</h3>
+<p>Every portable trust claim in AGTP is a Verifiable Credential conforming to <cite>[<a href="#bib-vc-data-model">VC-DATA-MODEL-2.0</a>]</cite> whose <code>type</code> includes one of the following values.</p>
+<div class="table-wrap">
+<table>
+<caption>AGTP credential types</caption>
+<thead><tr><th>Type</th><th>Issuer</th><th>What it asserts</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><code>LearningSignal</code></td><td>Evaluator DID</td><td>Feedback about a subject in a Space along declared dimensions, bound to provenance.</td><td>Required for all conformance classes that issue or consume feedback.</td></tr>
+<tr><td><code>SpaceManifest</code></td><td>Space DID</td><td>The Space's dimensions, aggregation rule, persistence policy, status endpoints, knowledge and discovery pointers, valid over a period.</td><td>Required for <a class="term" href="#dfn-agtp-space">AGTP.Space</a>.</td></tr>
+<tr><td><code>InteractionReceipt</code></td><td>Receiver DID (subject or Space)</td><td>That a signal with a given hash was received and accepted, rejected or held pending, under a given nonce and idempotency key.</td><td>Optional; RECOMMENDED for Space-level receipts.</td></tr>
+<tr><td><code>CapabilityDescriptor</code></td><td>Owner DID</td><td>A normalised description of one capability, its interface binding, constraints and source artifacts.</td><td>Required for <a class="term" href="#dfn-agtp-capability-publisher">AGTP.CapabilityPublisher</a>.</td></tr>
+<tr><td><code>AnchorCommitment</code></td><td>Anchoring party DID</td><td>That a batch of AGTP objects with a given root was committed to a named ledger or registry record at a time.</td><td>Required for <a class="term" href="#dfn-agtp-anchor-integrator">AGTP.AnchorIntegrator</a>.</td></tr>
+<tr><td><code>DelegationCredential</code></td><td>Delegating DID</td><td>That one DID acts for another for a stated scope, used with gateway identities.</td><td>Optional.</td></tr>
+<tr><td><code>PolicyAssertion</code></td><td>Owner DID</td><td>A signed, hash-bound copy of a policy artifact such as an AGENTS.md file, for exchange across organisational boundaries.</td><td>Optional.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The following rules apply to every AGTP credential:</p>
+<ol>
+<li>The <code>@context</code> array MUST begin with <code>https://www.w3.org/ns/credentials/v2</code> and MUST include <code>https://schema.agtp.org/context/v2</code>. Profile contexts MAY follow.</li>
+<li>The <code>type</code> array MUST include <code>VerifiableCredential</code> and exactly one AGTP credential type. The AGTP context also defines the aliases <code>LearningSignalCredential</code>, <code>SpaceManifestCredential</code>, <code>InteractionReceiptCredential</code>, <code>CapabilityDescriptorCredential</code> and <code>AnchorCommitmentCredential</code>, mapped to the same IRIs; consumers MUST treat an alias as equivalent to its short form.</li>
+<li><code>issuer</code> MUST be a DID or an object whose <code>id</code> is a DID. <code>validFrom</code> MUST be present. <code>validUntil</code> MUST be present on a Space Manifest and MAY be present elsewhere.</li>
+<li><code>id</code> SHOULD be present and SHOULD be a UUID URN unless the credential is served from a stable URL, in which case that URL MAY be used.</li>
+<li><code>credentialStatus</code> MUST be present on Learning Signals and Space Manifests, as specified in <a href="#status">section 10.3</a>.</li>
+<li><code>credentialSchema</code> MAY reference the JSON Schema of <a href="#schemas">Appendix B</a> using the <code>JsonSchema</code> type of <cite>[<a href="#bib-vc-json-schema">VC-JSON-SCHEMA</a>]</cite>.</li>
+<li><code>proof</code> MUST be a Data Integrity proof as specified in <a href="#proofs">section 10.1</a>. Enveloping proofs (JOSE or COSE) MAY additionally be used where a transport requires them, but the embedded Data Integrity proof is what other AGTP parties verify.</li>
+<li>Space-scoped credentials—signals, receipts and descriptors evaluated in a Space—MUST carry the Space's DID in <code>credentialSubject.space</code>.</li>
+</ol>
+<div class="note">
+<span class="marker">Note: Compatibility with AGTP v2 credentials</span>
+<p>AGTP v2 credentials use the <code>https://www.w3.org/2018/credentials/v1</code> context, <code>issuanceDate</code> in place of <code>validFrom</code>, and the <code>Ed25519Signature2020</code> proof type. Consumers MUST continue to accept them during the overlap window of <a href="#versioning">section 13</a>; producers SHOULD emit 2.1 credentials and MAY dual-serve.</p>
+</div>
+</section>
+
+<section id="observation-records">
+<h3>Observation Records</h3>
+<p>Not every runtime event warrants a credential. Tool calls, task state transitions, UI events and usage figures are numerous, often private and rarely interesting on their own; what matters is that an evaluator can later refer to them. AGTP therefore defines an <dfn id="dfn-observation-record">Observation Record</dfn>: a JSON-LD document with the same context and identifiers as the credential family, but without the requirement of a proof. Records are the raw material from which Learning Signals are distilled, and the place where binding profiles preserve upstream identifiers. Their properties are specified in <a href="#observation-record">section 5.7</a>.</p>
+<p>A record MAY carry a Data Integrity proof. A signed record remains an observation, not a signal: it attests that something was observed, not how good it was.</p>
+</section>
+
+<section id="extensibility">
+<h3>Extensibility</h3>
+<p>AGTP objects are JSON-LD 1.1 documents <cite>[<a href="#bib-json-ld11">JSON-LD11</a>]</cite>. The AGTP vocabulary is identified by the IRI <code>https://schema.agtp.org/ontology#</code>, and the versioned context <code>https://schema.agtp.org/context/v2</code> maps the terms used in this specification to that vocabulary. Term definitions in the context are protected; an extension context MUST NOT redefine them.</p>
+<p>Extensions are made by adding properties in a separate namespace, either by including an additional context that defines the terms or by using full IRIs or compact IRIs with a declared prefix. Binding profiles define their terms in profile namespaces of the form <code>https://schema.agtp.org/profiles/&lt;name&gt;#</code>. Consumers MUST ignore properties they do not understand and MUST preserve them when re-serialising an object whose proof they intend to keep valid. The AGTP context reserves the <code>agtp</code> prefix for the core vocabulary.</p>
+<p>New dimension identifiers require no extension; they are declared by Spaces. New credential types, service types, interface types, privacy classes, aggregation functions and provenance parameters are added through the registries of <a href="#registries">Appendix F</a>.</p>
+</section>
+
+<section id="representations">
+<h3>Representations</h3>
+<p>AGTP objects have one canonical representation: JSON-LD, serialised as JSON <cite>[<a href="#bib-rfc8259">RFC8259</a>]</cite> with the contexts of <a href="#credential-family">section 4.2</a>. Because every AGTP context is fixed and published, an implementation that does not perform JSON-LD processing MAY treat the documents as plain JSON with well-known keys, provided it emits the required contexts unchanged and does not introduce terms the contexts do not define. Hashing and signing, however, are defined over the RDF dataset obtained by JSON-LD expansion (<a href="#hashing">section 10.2</a>), so an implementation MUST be able to canonicalise the documents it verifies, either itself or through a trusted service.</p>
+<p>The media type of an AGTP credential is <code>application/vc</code> as registered by <cite>[<a href="#bib-vc-data-model">VC-DATA-MODEL-2.0</a>]</cite>. Consumers MUST also accept <code>application/vc+ld+json</code> and <code>application/vc+json</code>, which AGTP v2 implementations emit. Receipts, observation records, capability endpoints and metrics feeds use <code>application/json</code>; errors use <code>application/problem+json</code> <cite>[<a href="#bib-rfc9457">RFC9457</a>]</cite>; DID Documents use the media types of <cite>[<a href="#bib-did-core">DID-CORE</a>]</cite>.</p>
+</section>
+</section>

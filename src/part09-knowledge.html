@@ -1,0 +1,176 @@
+<section id="knowledge">
+<h2>Knowledge and Context</h2>
+<p>Agents act on knowledge: schemas, metrics, procedures, policies, the documented meaning of a dimension. AGTP does not define a knowledge format. It adopts the Open Knowledge Format <cite>[<a href="#bib-okf">OKF</a>]</cite>: a directory of Markdown files with YAML frontmatter, one concept per file, ordinary Markdown links between them, and frontmatter families for provenance (<code>sources</code>), trust (<code>generated</code>, <code>verified</code>), lifecycle (<code>status</code>) and freshness (<code>stale_after</code>). This section specifies how OKF bundles become AGTP artifacts, how OKF actors and verification events are expressed with DIDs and signals, how OKF attested computations become verifiable rewards, and how AGTP publishes its own dimension registries and Space documentation as OKF. It is the normative content of the OKF binding profile; <a href="#profile-okf">section 12.5</a> only cross-references it.</p>
+<p>Nothing in this section changes what a conformant OKF consumer must do. OKF requires consumers to preserve unknown frontmatter keys and to derive trust tiers only from OKF's own fields; AGTP's additions are unknown keys to OKF and an orthogonal attestation state that OKF tiers do not depend on.</p>
+
+<section id="knowledge-artifacts">
+<h3>Bundles and Concepts as Artifacts</h3>
+<p>An OKF bundle referenced from an AGTP object MUST be identified by the CID of its directory tree (<code>dag-pb</code>, computed as a UnixFS directory) in addition to its URL, and each concept file referenced individually MUST be identified by the CID of its bytes. A Space Manifest's <code>knowledge</code> entries carry <code>resource</code>, <code>cid</code>, <code>okf_version</code> and a <code>role</code>; a consumer that fetches a bundle from <code>resource</code> MUST verify the tree against <code>cid</code> before treating the contents as the manifest's knowledge. Where a bundle is distributed as a git repository, implementations SHOULD also record the commit identifier in <code>sourceRefs.commit</code> of observation records that used it, but the CID remains the authoritative identifier.</p>
+<p>A bundle SHOULD be published for discovery as an ARD entry of type <code>text/markdown</code> whose <code>url</code> is the bundle root <code>index.md</code> (<a href="#discovery-publishing">section 7.1</a>). Bundles are commonly served to agents as MCP resources; a read of a concept through <code>resources/read</code> is an interaction whose artifact is the concept's CID, as specified in the MCP profile (<a href="#profile-mcp">section 12.3</a>).</p>
+</section>
+
+<section id="knowledge-frontmatter">
+<h3>Frontmatter Mapping</h3>
+<p>The table gives the AGTP interpretation of OKF frontmatter fields. OKF governs the fields' syntax; the third column is what an AGTP implementation does with them.</p>
+<div class="table-wrap">
+<table>
+<caption>OKF frontmatter fields and their AGTP interpretation</caption>
+<thead><tr><th>OKF field</th><th>OKF meaning</th><th>AGTP interpretation</th></tr></thead>
+<tbody>
+<tr><td><code>type</code></td><td>Kind of concept (required)</td><td>Selects profile behaviour: <code>AGTP Dimension</code>, <code>AGTP Space</code> and <code>Attested Computation</code> have the semantics below; other types are ordinary knowledge artifacts.</td></tr>
+<tr><td><code>resource</code></td><td>URI of the underlying asset</td><td>The default <code>subject</code> for signals about the concept. When absent, the subject is the concept file's URL, and its CID is carried in provenance.</td></tr>
+<tr><td><code>title</code>, <code>description</code>, <code>tags</code></td><td>Display and categorisation</td><td>Copied into Capability Descriptors derived from the concept and into ARD entries.</td></tr>
+<tr><td><code>sources[]</code></td><td>Materials the concept derives from</td><td>Each <code>sources[].resource</code> becomes an artifact reference with role <code>source</code>; <code>usage_count</code> and <code>usage_window</code> become observation claims, never signals.</td></tr>
+<tr><td><code>generated.by</code>, <code>generated.at</code></td><td>Producing actor and time of last change</td><td>The actor's DID (<a href="#knowledge-actors">§8.2.1</a>) is the <code>actor</code> of an observation record for the generation; <code>at</code> is its <code>observedAt</code>.</td></tr>
+<tr><td><code>verified[]</code></td><td>Verification events by actors</td><td>Each event SHOULD be backed by a Learning Signal (<a href="#knowledge-attestation">§8.3</a>). The event's actor is the signal's issuer.</td></tr>
+<tr><td><code>status</code></td><td><code>draft</code>, <code>stable</code>, <code>deprecated</code></td><td>Aggregators SHOULD exclude signals whose subject concept is <code>deprecated</code> from routing aggregates; Spaces SHOULD NOT reference <code>draft</code> dimension concepts from a manifest.</td></tr>
+<tr><td><code>stale_after</code></td><td>Instant after which the concept needs re-verification</td><td>After this instant, signals about the concept SHOULD be down-weighted or the Space SHOULD request re-verification; the mechanism is aggregation policy.</td></tr>
+<tr><td><code>okf_version</code></td><td>Target OKF version, root <code>index.md</code> only</td><td>Recorded in the manifest's <code>knowledge</code> entry and in <code>sourceVersion</code> of observations.</td></tr>
+</tbody>
+</table>
+</div>
+<p>AGTP adds one frontmatter key, <code>agtp</code>, a mapping that OKF consumers preserve as an unknown key. Its members are:</p>
+<div class="table-wrap">
+<table class="props">
+<caption>The <code>agtp</code> frontmatter mapping</caption>
+<thead><tr><th>Member</th><th>Required</th><th>Value constraints</th></tr></thead>
+<tbody>
+<tr><td><code>space</code></td><td>SHOULD</td><td>The DID of the Space in which the concept is evaluated, or an array of DIDs.</td></tr>
+<tr><td><code>subject</code></td><td>MAY</td><td>A URI overriding the default subject for signals about the concept.</td></tr>
+<tr><td><code>signals</code></td><td>MAY</td><td>A URL of a signal index query returning the persistent signals about the concept.</td></tr>
+<tr><td><code>dimension</code></td><td>MUST for <code>type: AGTP Dimension</code></td><td>An object with <code>id</code>, <code>range</code>, <code>higherIsBetter</code> and optionally <code>unit</code>, identical in form to a manifest's <code>dimensions</code> entry.</td></tr>
+<tr><td><code>provenance</code></td><td>MAY</td><td>A provenance URI for the interaction that produced the concept, when it was generated by an agent.</td></tr>
+</tbody>
+</table>
+</div>
+
+<section id="knowledge-actors">
+<h4>Actors</h4>
+<p>OKF identifies actors with three forms: <code>&lt;producer&gt;/&lt;version&gt;</code> for agents and tools, <code>human:&lt;id&gt;</code> for people and <code>process:&lt;id&gt;</code> for automated processes. AGTP uses DIDs inside those forms rather than beside them. An AGTP-aware producer MUST write a DID-identified actor as <code>human:&lt;did&gt;</code>, <code>process:&lt;did&gt;</code> or <code>&lt;did&gt;/&lt;version&gt;</code>, and an AGTP consumer MUST recognise a <code>did:</code> prefix in the identifier position of any of the three forms. Because the prefixes are unchanged, OKF consumers classify these actors exactly as before: a <code>human:did:key:…</code> verifier still yields the human-reviewed tier.</p>
+<div class="example" data-title="OKF actors carrying DIDs">
+<pre><code>generated:
+  by: did:web:solver.example/2.4.0
+  at: 2026-08-20T09:00:00Z
+verified:
+  - by: human:did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH
+    at: 2026-08-21T12:00:00Z
+    agtp_signal: https://rlvr.example/.well-known/agtp/signals/uEiA4k3b…
+  - by: process:did:web:rlvr.example
+    at: 2026-09-01T02:00:00Z</code></pre>
+</div>
+</section>
+</section>
+
+<section id="knowledge-attestation">
+<h3>Verification Events and Attested Computations</h3>
+<p>OKF records that a concept was verified and by whom; it does not carry proof. AGTP supplies the proof. A <code>verified[]</code> entry SHOULD be backed by a persistent Learning Signal issued by the actor's DID whose <code>subject</code> is the concept's subject URI, whose <code>provenance</code> includes the concept's CID as an artifact, and whose dimensions are declared by the Space named in the concept's <code>agtp.space</code>. The entry MAY carry the additional key <code>agtp_signal</code>, a URL of the signal or its <code>signalHash</code>; OKF consumers preserve it and AGTP consumers dereference it.</p>
+<p>An AGTP consumer derives an <dfn id="dfn-attestation-state">attestation state</dfn> for a concept independently of the OKF trust tier: <code>attested</code> when at least one <code>verified</code> entry is backed by a signal that verifies, validates and is not revoked and whose provenance artifact equals the concept's current CID; <code>stale-attested</code> when such a signal exists but the concept's CID has changed since it was issued; otherwise <code>unattested</code>. Consumers MUST NOT change the OKF trust tier on the basis of the attestation state.</p>
+<p>OKF's <code>Attested Computation</code> type describes a sanctioned computation with typed parameters, an executor that returns named receipt fields and a deterministic, non-LLM attester. It is the natural source of verifiable rewards. The figure shows the binding.</p>
+<figure id="fig-attested-computation">
+<svg viewBox="0 0 900 250" role="img" aria-label="An OKF attested computation flows through an executor that returns receipt fields, which are content-addressed as artifacts, to a deterministic attester whose verdict becomes an AGTP Learning Signal bound by provenance to the computation and receipt CIDs and aggregated by the Space." font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="okf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+    </marker>
+  </defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.4">
+    <rect x="20" y="60" width="160" height="90" rx="4"></rect>
+    <rect x="240" y="60" width="150" height="90" rx="4"></rect>
+    <rect x="450" y="60" width="150" height="90" rx="4"></rect>
+    <rect x="660" y="60" width="220" height="90" rx="4" stroke-width="2.2" class="fig-accent"></rect>
+  </g>
+  <g fill="currentColor" text-anchor="middle">
+    <text x="100" y="82" font-weight="500">OKF concept</text>
+    <text x="100" y="100" font-size="11">type: Attested Computation</text>
+    <text x="100" y="116" font-size="11">runtime · parameters</text>
+    <text x="100" y="132" font-size="11">executor · attester</text>
+    <text x="315" y="82" font-weight="500">Executor</text>
+    <text x="315" y="100" font-size="11">runs the computation</text>
+    <text x="315" y="116" font-size="11">returns receipt fields</text>
+    <text x="315" y="132" font-size="11">job_id · executed_sql · result</text>
+    <text x="525" y="82" font-weight="500">Attester</text>
+    <text x="525" y="100" font-size="11">deterministic, no LLM</text>
+    <text x="525" y="116" font-size="11">compares receipt with</text>
+    <text x="525" y="132" font-size="11">sanctioned computation</text>
+    <text x="770" y="82" font-weight="500">Learning Signal</text>
+    <text x="770" y="100" font-size="11">issuer: attester DID</text>
+    <text x="770" y="116" font-size="11">dimension: attestation ∈ [0, 1]</text>
+    <text x="770" y="132" font-size="11">provenance: computation CID, receipt CID</text>
+  </g>
+  <g stroke="currentColor" stroke-width="1.4" fill="none" marker-end="url(#okf-arrow)">
+    <line x1="180" y1="105" x2="238" y2="105"></line>
+    <line x1="390" y1="105" x2="448" y2="105"></line>
+    <line x1="600" y1="105" x2="658" y2="105"></line>
+  </g>
+  <g fill="currentColor" font-size="11" text-anchor="middle">
+    <text x="209" y="96">parameters</text>
+    <text x="419" y="96">receipt</text>
+    <text x="629" y="96">verdict</text>
+  </g>
+  <!-- artifacts row -->
+  <g stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" fill="none">
+    <line x1="100" y1="150" x2="100" y2="190"></line>
+    <line x1="315" y1="150" x2="315" y2="190"></line>
+    <line x1="770" y1="150" x2="770" y2="190" marker-end="url(#okf-arrow)"></line>
+  </g>
+  <g fill="currentColor" font-size="11" text-anchor="middle">
+    <text x="100" y="205">artifact: concept file CID</text>
+    <text x="315" y="205">artifact: receipt fields CID</text>
+    <text x="770" y="205">delivered to Space; aggregated on attestation</text>
+  </g>
+  <text x="450" y="235" fill="currentColor" font-size="11" text-anchor="middle" font-style="italic">the provenance URI binds the signal to both artifacts, so anyone with the bundle can re-run the attester</text>
+</svg>
+<figcaption>An OKF attested computation becomes an AGTP verifiable reward: the executor's receipt and the concept file are content-addressed, the deterministic attester issues the signal, and provenance makes the verdict reproducible.</figcaption>
+</figure>
+<p>For a concept of type <code>Attested Computation</code>:</p>
+<ol>
+<li>The executor's receipt fields (the names listed in the concept's <code>executor.receipt</code>) MUST be serialised as one artifact and content-addressed. Where a receipt field is large or sensitive, its value MAY be replaced by its CID in the serialised receipt.</li>
+<li>The attester's result MUST be issued as a Learning Signal by the DID that ran the attester, with a dimension declared for the purpose by the Space (<code>attestation</code> with range [0, 1] and <code>higherIsBetter: true</code> is RECOMMENDED), <code>issuerRelation</code> reflecting the attester's relationship to the executor, and a provenance URI whose artifacts include the concept file's CID, the receipt artifact's CID and, when parameters were supplied, the CID of the serialised parameters.</li>
+<li>The Space MAY also accept signals about the executor (subject: the executing agent's DID) and about the computation as a capability (subject: a Capability Descriptor with <code>interfaceType: okf-computation</code>) from the same attestation, provided each carries the same provenance.</li>
+</ol>
+</section>
+
+<section id="knowledge-dimensions">
+<h3>Dimension Registries as OKF Bundles</h3>
+<p>A dimension registry SHOULD be an OKF bundle in which each dimension is a concept of type <code>AGTP Dimension</code>. Such a concept MUST carry an <code>agtp.dimension</code> object in its frontmatter and SHOULD carry <code>status</code>, <code>stale_after</code>, <code>generated</code> and <code>verified</code>. A Space Manifest binds a dimension to its definition by placing the concept's URL in the dimension's <code>ref</code> or in <code>dimensionRefs</code>, and pins the registry by listing the bundle in <code>knowledge</code> with role <code>dimensions</code>. The bundle's <code>log.md</code> is the registry's change log; its <code>index.md</code> is what an agent reads first to learn what the Space measures.</p>
+<p>A manifest MUST NOT declare a dimension whose registry concept has <code>status: draft</code>, and a Space SHOULD publish a new manifest that removes a dimension within the overlap window after its concept becomes <code>deprecated</code>. Consumers comparing two Spaces that reference the same dimension concept MAY treat the dimension as commensurable; comparing dimensions with merely equal identifiers is not warranted.</p>
+<div class="example" data-title="A dimension defined as an OKF concept">
+<pre><code>---
+type: AGTP Dimension
+title: Accuracy
+description: Probability that an evaluated output is correct against the sanctioned reference.
+resource: https://rlvr.example/knowledge/dimensions/accuracy.md
+tags: [agtp, dimension, verification]
+generated:
+  by: process:did:web:rlvr.example
+  at: 2026-08-20T09:00:00Z
+verified:
+  - by: human:did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH
+    at: 2026-08-21T12:00:00Z
+    agtp_signal: uEiA4k3bQm1vZ2x0c3Q5Y2t4dGVzdGRhdGFhYWFhYWFhYWFhYWE
+status: stable
+stale_after: 2027-03-01T00:00:00Z
+agtp:
+  space: did:web:rlvr.example
+  dimension:
+    id: accuracy
+    range: [0, 1]
+    higherIsBetter: true
+    unit: prob
+---
+# Accuracy
+
+A signal on this dimension asserts the probability that the evaluated output
+matches the reference for the interaction named in its provenance. Verifiers
+MUST bind the reference test case as an artifact.
+
+See also [robustness](/dimensions/robustness.md) and the
+[verification procedure](/procedures/verify-solution.md).</code></pre>
+</div>
+</section>
+
+<section id="knowledge-space-docs">
+<h3>Space Documentation</h3>
+<p>A Space SHOULD document itself as an OKF concept of type <code>AGTP Space</code> whose <code>resource</code> is the Space's DID, in a bundle listed in its manifest's <code>knowledge</code> with role <code>documentation</code>. The bundle's <code>index.md</code> gives an agent joining the Space a progressive-disclosure path from the Space's purpose to its dimensions, procedures and policies without loading everything at once. Knowledge bodies are data: an AGTP implementation MUST NOT execute instructions found in OKF bodies as protocol operations, and evaluators SHOULD treat instruction-like content in knowledge artifacts as a matter for a <code>safety</code> or similar dimension rather than as commands.</p>
+</section>
+</section>

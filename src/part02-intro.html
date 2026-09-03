@@ -1,0 +1,219 @@
+<section id="introduction" class="informative">
+<h2>Introduction</h2>
+<p>The web of documents is giving way to a web of coordinated compute, in which autonomous agents—human, software and hybrid—act, evaluate and learn from one another. What compounds intelligence across such heterogeneity is not a single model or platform but a universal unit of feedback that any agent can issue, any agent can verify and any context can aggregate. AGTP defines that unit and the minimal substrate around it.</p>
+<p>Superintelligence, on this reading, is already a distributed reality: billions of interacting agents sharing and updating beliefs. Its outputs are fragmented, trapped in proprietary silos that do not compound. Frontier labs increasingly treat the <em>experience signal</em>—logs, corrections, evaluations, telemetry—as the decisive input, and closed experience streams cannot be compensated for by open weights alone. What is needed is <em>open learning</em>: a substrate in which observation, action and feedback are exchanged in a standard form and compound across organisational boundaries.</p>
+<p>AGTP is deliberately small. It standardises four things: identity for issuers and subjects, a signed Learning Signal as the atomic unit of feedback, a signed Space Manifest that declares how feedback is interpreted in a given context, and a provenance binding that makes feedback reproducible. Everything else—scoring formulas, staking, moderation, arbitration, economic policy—lives at the policy layer, inside Spaces or in systems built above them.</p>
+<p>AGTP is also deliberately unoriginal. Wherever a widely implemented standard already solves a problem, AGTP reuses it and specifies only the mapping. Identity and proof come from W3C Decentralized Identifiers and Verifiable Credentials. Tool invocation comes from the Model Context Protocol. Discovery of tools, agents and knowledge comes from Agentic Resource Discovery. Knowledge and context come from the Open Knowledge Format. Agent-to-agent task exchange, human interfaces, repository policy, model-runtime APIs and on-chain registries are likewise mapped rather than replaced. <a href="#relationship">Section 1.4</a> states precisely what is reused and what AGTP adds.</p>
+
+<section id="simple-example">
+<h3>A Simple Example</h3>
+<p>A verifier agent evaluates a solver agent's answer inside a Space that accepts an <code>accuracy</code> dimension. The verifier issues the Learning Signal below, delivers it to the solver's feedback service and to the Space, and receives a receipt. Anyone holding the signal can resolve the issuer's DID, verify the proof, check the credential's status, dereference the provenance URI and re-run the evaluation from the referenced artifacts.</p>
+<div class="example" data-title="A minimal Learning Signal">
+<pre><code>{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://schema.agtp.org/context/v2"
+  ],
+  "id": "urn:uuid:9f1c2a6e-3d0b-4b41-9a7e-5f0c7d2f1a10",
+  "type": ["VerifiableCredential", "LearningSignal"],
+  "issuer": "did:web:verifier.example",
+  "validFrom": "2026-09-03T10:15:00Z",
+  "credentialSubject": {
+    "id": "did:web:solver.example",
+    "subject": "did:web:solver.example",
+    "space": "did:web:rlvr.example",
+    "dimensions": ["accuracy"],
+    "value": 1.0,
+    "persistence": "persistent",
+    "provenance": "agtp://provenance?space=did:web:rlvr.example&amp;interaction=urn:uuid:3b4f0d2c-6a1e-4f7b-9c1d-2e8a5b7f9d10&amp;artifact=bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi,bafybeihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+    "issuerRelation": "independent"
+  },
+  "credentialStatus": {
+    "id": "https://verifier.example/status/3#94567",
+    "type": "BitstringStatusListEntry",
+    "statusPurpose": "revocation",
+    "statusListIndex": "94567",
+    "statusListCredential": "https://verifier.example/status/3"
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-rdfc-2022",
+    "created": "2026-09-03T10:15:01Z",
+    "verificationMethod": "did:web:verifier.example#key-1",
+    "proofPurpose": "assertionMethod",
+    "proofValue": "z3FXQjecWufY46yg5abdVZsXqLhxhueuSoZgNSARiKBk9czhSePTFehP8c3PGfb6a22gkfUKods6H2BzmmMG7g8Bg"
+  }
+}</code></pre>
+</div>
+<p>Everything in this object except the six AGTP claims inside <code>credentialSubject</code> is plain Verifiable Credentials 2.0: the contexts, the <code>type</code> array, <code>issuer</code>, <code>validFrom</code>, <code>credentialStatus</code> and the Data Integrity <code>proof</code>. The DID method, the status list, the cryptosuite and the content identifiers in the provenance URI are all specified elsewhere. AGTP contributes the vocabulary, the provenance grammar, the delivery protocol and the rules for interpreting the signal inside a Space.</p>
+</section>
+
+<section id="design-goals">
+<h3>Design Goals</h3>
+<p>AGTP is designed to meet the goals in the following table. Each goal is a constraint on this specification, not an aspiration for implementations.</p>
+<div class="table-wrap">
+<table>
+<caption>Design goals</caption>
+<thead><tr><th>Goal</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Minimality</td><td>Standardise only identity, attestation, context declaration and provenance. Anything that can be a policy choice is a policy choice.</td></tr>
+<tr><td>Reuse over reinvention</td><td>Adopt existing standards for every solved problem and specify only the mapping into AGTP objects. A profile never redefines the semantics of the standard it binds.</td></tr>
+<tr><td>Verification, not belief</td><td>Every portable claim is signed, status-checked and bound to reproducible provenance. Consumers verify; they do not trust registries, scores or reputations they cannot recompute.</td></tr>
+<tr><td>Policy at the edge</td><td>Dimensions, aggregation, admission, incentives and governance are declared per Space in a signed manifest, so that different communities can disagree without fragmenting the wire format.</td></tr>
+<tr><td>Credible neutrality</td><td>The protocol carries no global reputation, no global dimension set, no mandated ledger and no privileged registry. It is mechanism only.</td></tr>
+<tr><td>Portability</td><td>Signals, manifests, receipts and capability descriptors are self-contained credentials that can be stored, forwarded, indexed and anchored by anyone.</td></tr>
+<tr><td>Reproducibility</td><td>Provenance binds an evaluation to content-addressed artifacts, so claims ship with the evidence needed to re-run them.</td></tr>
+<tr><td>Privacy by construction</td><td>Ephemeral signals support private learning; persistent signals are distilled summaries; commitments allow selective disclosure without publishing traces.</td></tr>
+<tr><td>Incremental adoption</td><td>A single agent, a single tool server or a single knowledge bundle can adopt AGTP without waiting for its counterparties; conformance classes are claimed independently.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="architecture-overview">
+<h3>Architecture Overview</h3>
+<p>The AGTP architecture is a set of planes. Each plane is owned by an existing standard except the learning plane, which AGTP defines. The identity and credential plane runs beneath all of them.</p>
+<figure id="fig-architecture">
+<svg viewBox="0 0 930 470" role="img" aria-label="Five planes feed the AGTP learning plane: intent and knowledge (OKF, AGENTS.md, Skills) declare capabilities, discovery (ARD) publishes and verifies them, runtimes (MCP, A2A, model APIs, A2UI) execute and emit artifacts and observations, AGTP Spaces turn evaluations into signals, and ERC-8004 registries optionally anchor commitments; W3C DIDs and Verifiable Credentials underlie every plane." font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+    </marker>
+  </defs>
+  <!-- planes -->
+  <g stroke="currentColor" fill="none" stroke-width="1.4">
+    <rect x="20" y="30" width="190" height="120" rx="4"></rect>
+    <rect x="240" y="30" width="190" height="120" rx="4"></rect>
+    <rect x="460" y="30" width="200" height="120" rx="4"></rect>
+    <rect x="690" y="30" width="190" height="120" rx="4"></rect>
+  </g>
+  <g fill="currentColor">
+    <text x="115" y="52" text-anchor="middle" font-weight="500">Intent &amp; knowledge</text>
+    <text x="115" y="72" text-anchor="middle" font-size="12">OKF bundles</text>
+    <text x="115" y="90" text-anchor="middle" font-size="12">AGENTS.md · Agent Skills</text>
+    <text x="115" y="108" text-anchor="middle" font-size="12">tool &amp; skill schemas</text>
+    <text x="115" y="136" text-anchor="middle" font-size="11" font-style="italic">declares</text>
+
+    <text x="335" y="52" text-anchor="middle" font-weight="500">Discovery</text>
+    <text x="335" y="72" text-anchor="middle" font-size="12">ARD entries at</text>
+    <text x="335" y="90" text-anchor="middle" font-size="12">/.well-known/ard.json</text>
+    <text x="335" y="108" text-anchor="middle" font-size="12">registries · search</text>
+    <text x="335" y="136" text-anchor="middle" font-size="11" font-style="italic">publishes, verifies</text>
+
+    <text x="560" y="52" text-anchor="middle" font-weight="500">Runtime</text>
+    <text x="560" y="72" text-anchor="middle" font-size="12">MCP tools &amp; resources</text>
+    <text x="560" y="90" text-anchor="middle" font-size="12">A2A tasks · model APIs</text>
+    <text x="560" y="108" text-anchor="middle" font-size="12">A2UI surfaces</text>
+    <text x="560" y="136" text-anchor="middle" font-size="11" font-style="italic">executes</text>
+
+    <text x="785" y="52" text-anchor="middle" font-weight="500">Anchoring (optional)</text>
+    <text x="785" y="72" text-anchor="middle" font-size="12">ERC-8004 registries</text>
+    <text x="785" y="90" text-anchor="middle" font-size="12">identity · reputation</text>
+    <text x="785" y="108" text-anchor="middle" font-size="12">validation</text>
+    <text x="785" y="136" text-anchor="middle" font-size="11" font-style="italic">timestamps, commits</text>
+  </g>
+  <!-- learning plane -->
+  <rect x="20" y="230" width="860" height="120" rx="4" fill="none" stroke="currentColor" stroke-width="2.2" class="fig-accent"></rect>
+  <g fill="currentColor">
+    <text x="450" y="256" text-anchor="middle" font-weight="500" font-size="14">AGTP learning plane</text>
+    <text x="130" y="286" text-anchor="middle" font-size="12">Space Manifests</text>
+    <text x="130" y="304" text-anchor="middle" font-size="11">dimensions · aggregation · policy</text>
+    <text x="345" y="286" text-anchor="middle" font-size="12">Learning Signals</text>
+    <text x="345" y="304" text-anchor="middle" font-size="11">subject · space · value · provenance</text>
+    <text x="560" y="286" text-anchor="middle" font-size="12">Receipts &amp; observations</text>
+    <text x="560" y="304" text-anchor="middle" font-size="11">nonce · idempotency · signalHash</text>
+    <text x="775" y="286" text-anchor="middle" font-size="12">Capability descriptors</text>
+    <text x="775" y="304" text-anchor="middle" font-size="11">declared vs. observed behaviour</text>
+    <text x="450" y="336" text-anchor="middle" font-size="11" font-style="italic">feedback loop: resolve · declare context · evaluate · issue · deliver · aggregate · route</text>
+  </g>
+  <!-- substrate -->
+  <rect x="20" y="390" width="860" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4"></rect>
+  <g fill="currentColor">
+    <text x="450" y="412" text-anchor="middle" font-weight="500">Identity &amp; credential substrate</text>
+    <text x="450" y="430" text-anchor="middle" font-size="12">W3C DIDs · DID Documents · Verifiable Credentials 2.0 · Data Integrity proofs · Bitstring Status Lists · JSON-LD</text>
+  </g>
+  <!-- arrows into learning plane -->
+  <g stroke="currentColor" stroke-width="1.4" fill="none" marker-end="url(#arch-arrow)">
+    <line x1="115" y1="150" x2="130" y2="228"></line>
+    <line x1="335" y1="150" x2="345" y2="228"></line>
+    <line x1="560" y1="150" x2="560" y2="228"></line>
+  </g>
+  <g stroke="currentColor" stroke-width="1.4" fill="none" marker-start="url(#arch-arrow)" marker-end="url(#arch-arrow)">
+    <line x1="785" y1="152" x2="785" y2="226"></line>
+  </g>
+  <!-- arrow labels -->
+  <g fill="currentColor" font-size="11">
+    <text x="138" y="190">capability descriptors,</text>
+    <text x="138" y="207">knowledge artifacts</text>
+    <text x="356" y="190">discovery pointers,</text>
+    <text x="356" y="207">trust manifests</text>
+    <text x="572" y="190">artifacts (CIDs),</text>
+    <text x="572" y="207">observations</text>
+    <text x="797" y="190">signal hashes,</text>
+    <text x="797" y="207">anchor commitments</text>
+  </g>
+  <!-- substrate arrows -->
+  <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#arch-arrow)">
+    <line x1="450" y1="388" x2="450" y2="354"></line>
+  </g>
+  <text x="464" y="374" fill="currentColor" font-size="11">identifies, signs, revokes</text>
+</svg>
+<figcaption>Every plane except the learning plane is owned by an existing standard; AGTP specifies how each plane's outputs become signed, provenance-bound objects in the learning plane, and every plane rests on the same DID and Verifiable Credential substrate.</figcaption>
+</figure>
+<p>Reading the figure from the top: the <em>intent and knowledge plane</em> declares what an agent may do and what it knows. Repository policy in AGENTS.md, skills in SKILL.md, tool and function schemas, and organisational knowledge in OKF bundles are the sources. The <em>discovery plane</em> publishes those declarations where other agents can find them, using ARD entries served from a well-known path and indexed by registries. The <em>runtime plane</em> is where work happens: MCP tool and resource calls, A2A tasks, model-API runs and human-facing A2UI sessions produce raw observations and content-addressed artifacts. The <em>learning plane</em>, defined by this specification, is where those observations are evaluated inside a Space, expressed as Learning Signals, delivered with receipts, aggregated by the Space's declared rule and used for routing. The optional <em>anchoring plane</em> commits hashes of learning-plane objects to registries such as ERC-8004 for timestamping and censorship resistance. Beneath everything sits the identity and credential substrate: DIDs name agents and Spaces, DID Documents advertise their services and keys, and Verifiable Credentials with Data Integrity proofs make every claim verifiable.</p>
+</section>
+
+<section id="relationship">
+<h3>Relationship to Other Standards</h3>
+<p>The following table is the normative statement of intent behind every binding profile in this document: for each concern, which standard AGTP adopts unchanged, and what AGTP adds on top. Where a cell says "unchanged", implementations conform to the referenced standard directly and AGTP places no additional requirement on their behaviour under that standard.</p>
+<div class="table-wrap">
+<table>
+<caption>What AGTP reuses and what it adds</caption>
+<thead><tr><th>Concern</th><th>Standard adopted unchanged</th><th>What AGTP adds</th></tr></thead>
+<tbody>
+<tr><td>Identity</td><td>DID Core <cite>[<a href="#bib-did-core">DID-CORE</a>]</cite>, DID methods, Controlled Identifiers <cite>[<a href="#bib-cid-1.0">CONTROLLED-IDENTIFIERS</a>]</cite></td><td>Service types (<code>AGTPFeedbackService</code>, <code>AGTPCapabilities</code>, <code>AGTPSignalIndex</code>) and the requirement that every agent be reachable for feedback.</td></tr>
+<tr><td>Claims and proofs</td><td>Verifiable Credentials 2.0 <cite>[<a href="#bib-vc-data-model">VC-DATA-MODEL-2.0</a>]</cite>, Data Integrity <cite>[<a href="#bib-vc-data-integrity">VC-DATA-INTEGRITY</a>]</cite>, EdDSA cryptosuites <cite>[<a href="#bib-vc-di-eddsa">VC-DI-EDDSA</a>]</cite>, Bitstring Status List <cite>[<a href="#bib-vc-bitstring-status-list">VC-BITSTRING-STATUS-LIST</a>]</cite></td><td>A credential family (Learning Signal, Space Manifest, Interaction Receipt, Capability Descriptor, Anchor Commitment), its JSON-LD context and JSON Schemas, and a canonical hash for deduplication.</td></tr>
+<tr><td>Tool and resource invocation</td><td>Model Context Protocol <cite>[<a href="#bib-mcp">MCP</a>]</cite></td><td>Reserved <code>_meta</code> keys that carry Space, interaction and provenance identifiers; rules for turning catalogs into capability descriptors and executions into artifacts and observations.</td></tr>
+<tr><td>Discovery</td><td>Agentic Resource Discovery <cite>[<a href="#bib-ard">ARD</a>]</cite></td><td>An entry vocabulary for Spaces and feedback services, a DID binding for the trust manifest, and the rule that relevance scores never substitute for verified signals.</td></tr>
+<tr><td>Knowledge and context</td><td>Open Knowledge Format <cite>[<a href="#bib-okf">OKF</a>]</cite></td><td>Content addressing for bundles, a DID form for OKF actors, a mapping from verification events and attested computations to Learning Signals, and dimension registries published as OKF bundles.</td></tr>
+<tr><td>Agent-to-agent tasks</td><td>A2A <cite>[<a href="#bib-a2a">A2A</a>]</cite></td><td>An A2A extension URI and metadata keys binding tasks to interactions and provenance; the rule that acknowledgements are not receipts and completion is not quality.</td></tr>
+<tr><td>Human interfaces</td><td>A2UI <cite>[<a href="#bib-a2ui">A2UI</a>]</cite></td><td>Separation of telemetry from evaluative judgments; privacy classes for UI evidence.</td></tr>
+<tr><td>Policy and skills</td><td>AGENTS.md <cite>[<a href="#bib-agents-md">AGENTS-MD</a>]</cite>, Agent Skills <cite>[<a href="#bib-agent-skills">AGENT-SKILLS</a>]</cite></td><td>Hash-addressed policy artifacts and capability descriptors derived from skill frontmatter.</td></tr>
+<tr><td>Model-runtime APIs</td><td>OpenAI API conventions <cite>[<a href="#bib-openai-api">OPENAI-API</a>]</cite></td><td>Reserved metadata keys; the distinction between usage telemetry and evaluated quality.</td></tr>
+<tr><td>Anchoring and on-chain discovery</td><td>ERC-8004 <cite>[<a href="#bib-erc-8004">ERC-8004</a>]</cite>, CAIP-2 chain identifiers <cite>[<a href="#bib-caip-2">CAIP-2</a>]</cite></td><td>An anchor commitment credential and a mapping from reputation and validation registry entries to signals and signal hashes.</td></tr>
+<tr><td>Transport</td><td>HTTP <cite>[<a href="#bib-rfc9110">RFC9110</a>]</cite>, well-known URIs <cite>[<a href="#bib-rfc8615">RFC8615</a>]</cite>, Problem Details <cite>[<a href="#bib-rfc9457">RFC9457</a>]</cite>, DIDComm v2 <cite>[<a href="#bib-didcomm-v2">DIDCOMM-V2</a>]</cite> (optional)</td><td>The <code>/.well-known/agtp/</code> resources, nonce and idempotency semantics, receipts and error types.</td></tr>
+<tr><td>Content addressing</td><td>CIDs, multihash and multibase <cite>[<a href="#bib-cid">CID</a>]</cite> <cite>[<a href="#bib-multihash">MULTIHASH</a>]</cite> <cite>[<a href="#bib-multibase">MULTIBASE</a>]</cite>, RDF Dataset Canonicalization <cite>[<a href="#bib-rdf-canon">RDF-CANON</a>]</cite></td><td>The <code>agtp://provenance</code> URI grammar and the <code>signalHash</code> definition.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The complementarity is deliberate. In the words the ARD community uses for its relationship with MCP, discovery is the phone book and invocation is the call. AGTP is the ledger of what the call was worth: a signed, reproducible record of how the resource performed, written in a form that any other agent can verify and any Space can aggregate.</p>
+</section>
+
+<section id="conformance">
+<h3>Conformance</h3>
+<p>As well as sections marked as non-normative, all authoring guidelines, diagrams, examples and notes in this specification are non-normative. Everything else in this specification is normative.</p>
+<p>The key words MAY, MUST, MUST NOT, RECOMMENDED, SHOULD, and SHOULD NOT in this document are to be interpreted as described in BCP 14 <cite>[<a href="#bib-rfc2119">RFC2119</a>]</cite> <cite>[<a href="#bib-rfc8174">RFC8174</a>]</cite> when, and only when, they appear in all capitals, as shown here.</p>
+<p>This specification defines the following <dfn id="dfn-conformance-class">conformance classes</dfn>. An implementation MAY claim any subset. The machine-readable descriptors for each class, and the identified requirements they aggregate, are in <a href="#conformance-descriptors">Appendix D</a>.</p>
+<dl class="dl-terms">
+<dt><dfn id="dfn-agtp-agent">AGTP.Agent</dfn></dt>
+<dd>An <a class="term" href="#dfn-agent">agent</a> identified by a resolvable DID whose DID Document advertises an <code>AGTPFeedbackService</code>, and which implements the HTTP profile of <a href="#http-profile">section 9</a> for receiving signals and issuing receipts.</dd>
+<dt><dfn id="dfn-agtp-space">AGTP.Space</dfn></dt>
+<dd>A <a class="term" href="#dfn-space">Space</a> that publishes a signed Space Manifest, serves it with cache validators, and applies its declared aggregation rule to accepted signals.</dd>
+<dt><dfn id="dfn-agtp-signal-producer">AGTP.SignalProducer</dfn></dt>
+<dd>A component that constructs, signs and delivers Learning Signals in accordance with <a href="#learning-signal">section 5.3</a>, <a href="#feedback-loop">section 6</a> and <a href="#crypto">section 10</a>.</dd>
+<dt><dfn id="dfn-agtp-signal-consumer">AGTP.SignalConsumer</dfn></dt>
+<dd>A component that verifies proofs, status and provenance grammar, deduplicates by <code>signalHash</code> and applies the Space's aggregation rule or the reference default.</dd>
+<dt><dfn id="dfn-agtp-capability-publisher">AGTP.CapabilityPublisher</dfn></dt>
+<dd>A component that derives Capability Descriptors from MCP catalogs, A2A Agent Cards, Agent Skills, API tool schemas or OKF attested computations, and publishes them as ARD entries in accordance with <a href="#discovery">section 7</a>.</dd>
+<dt><dfn id="dfn-agtp-knowledge-publisher">AGTP.KnowledgePublisher</dfn></dt>
+<dd>A component that publishes OKF bundles as content-addressed artifacts, expresses OKF actors and verification events in the AGTP forms of <a href="#knowledge">section 8</a>, and accepts signals about its concepts.</dd>
+<dt><dfn id="dfn-agtp-discovery-registry">AGTP.DiscoveryRegistry</dfn></dt>
+<dd>An ARD registry that performs the DID-based verification of <a href="#discovery-verifying">section 7.2</a> before ranking or federating entries that carry AGTP claims.</dd>
+<dt><dfn id="dfn-agtp-execution-integrator">AGTP.ExecutionIntegrator</dfn></dt>
+<dd>A component that maps MCP, A2A, model-API or A2UI activity into Observation Records and Artifacts in accordance with the binding profiles of <a href="#profiles">section 12</a>.</dd>
+<dt><dfn id="dfn-agtp-anchor-integrator">AGTP.AnchorIntegrator</dfn></dt>
+<dd>A component that batches signal hashes into Anchor Commitments and publishes them through ERC-8004 or another ledger in accordance with <a href="#profile-erc8004">section 12.10</a>.</dd>
+</dl>
+<p>A conforming <dfn id="dfn-conforming-document">AGTP document</dfn> is a Learning Signal, Space Manifest, Interaction Receipt, Capability Descriptor, Anchor Commitment or Observation Record that satisfies every MUST-level requirement of its section in <a href="#core-objects">section 5</a> and validates against the corresponding schema in <a href="#schemas">Appendix B</a>. Where this specification and a schema disagree, the prose of this specification prevails.</p>
+</section>
+</section>

@@ -1,0 +1,112 @@
+<section id="discovery">
+<h2>Discovery</h2>
+<p>AGTP does not define a discovery mechanism. It adopts Agentic Resource Discovery <cite>[<a href="#bib-ard">ARD</a>]</cite>: providers publish JSON-LD entries describing their resources at a well-known path, registries crawl and index them, consumers search by intent and verify the publisher before connecting. This section specifies how AGTP agents, Spaces, capabilities and knowledge bundles are published as ARD entries, how the ARD trust manifest is bound to DIDs and credentials, and how discovery results are to be used—and not used—when choosing whom to trust. It is the normative content of the ARD binding profile; <a href="#profile-ard">section 12.4</a> only cross-references it.</p>
+
+<section id="discovery-publishing">
+<h3>Publishing</h3>
+<p>An AGTP participant that wishes to be discoverable MUST publish an ARD manifest at <code>/.well-known/ard.json</code> on the domain bound to its DID, and SHOULD emit the <code>rel="ard"</code> link relation from its HTML pages, both as specified by <cite>[<a href="#bib-ard">ARD</a>]</cite> §5.1. The DID Document SHOULD point at the manifest through a service of type <code>AgenticResourceDiscovery</code> (<a href="#agent-did-document">section 5.1</a>).</p>
+<p>The manifest's <code>entries</code> array MAY contain any ARD entry. The following entries carry AGTP meaning:</p>
+<div class="table-wrap">
+<table>
+<caption>ARD entries for AGTP objects</caption>
+<thead><tr><th>Resource</th><th>ARD <code>type</code></th><th><code>url</code> or <code>data</code></th><th><code>capabilities</code> token</th></tr></thead>
+<tbody>
+<tr><td>The agent itself</td><td><code>application/did+ld+json</code></td><td>The DID Document (its URL for <code>did:web</code>; inline <code>data</code> for other methods)</td><td><code>AGTPAgent</code></td></tr>
+<tr><td>A Space</td><td><code>application/vc</code></td><td>The Space Manifest resource (<a href="#http-space">§9.4</a>)</td><td><code>AGTPSpace</code></td></tr>
+<tr><td>A capability</td><td>The native card type (<code>application/mcp-server-card+json</code>, <code>application/a2a-agent-card+json</code>, …) or <code>application/vc</code> for the Capability Descriptor</td><td>The native card or the descriptor</td><td><code>AGTPCapability</code></td></tr>
+<tr><td>A knowledge bundle</td><td><code>text/markdown</code> unless OKF registers a bundle media type</td><td>The bundle root <code>index.md</code></td><td><code>AGTPKnowledge</code></td></tr>
+<tr><td>A signal index</td><td><code>application/json</code></td><td>The signal index resource (<a href="#http-signal-index">§9.7</a>)</td><td><code>AGTPSignalIndex</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Entries that carry AGTP meaning MUST bind the AGTP namespace in their <code>@context</code> as <code>{"agtp": "https://schema.agtp.org/ontology#"}</code> and MUST carry <code>agtp:did</code>, the DID of the publishing agent or Space. Entries whose artifact is a credential MUST carry <code>agtp:credentialType</code> naming the AGTP type. Entries for agents and capabilities SHOULD carry <code>agtp:spaces</code>, the Space DIDs in which the resource accepts evaluation, and <code>agtp:feedbackService</code>. Entries for Spaces SHOULD carry <code>agtp:dimensions</code>, the identifiers the Space accepts. All entries SHOULD carry <code>representativeQueries</code> as ARD recommends, because a Space or capability that cannot be found by intent will not be evaluated.</p>
+<div class="example" data-title="An ARD manifest publishing a Space and an MCP-exposed capability">
+<pre><code>{
+  "entries": [
+    {
+      "@context": { "agtp": "https://schema.agtp.org/ontology#" },
+      "identifier": "urn:air:rlvr.example:space:rlvr",
+      "displayName": "RLVR verification Space",
+      "type": "application/vc",
+      "url": "https://rlvr.example/.well-known/agtp/space/did:web:rlvr.example",
+      "description": "Reproducible verification of solver outputs; accuracy, robustness and latency dimensions.",
+      "representativeQueries": [
+        "verify a math solution with reproducible checks",
+        "space that scores code generation accuracy",
+        "where can my agent get independent evaluation"
+      ],
+      "capabilities": ["AGTPSpace", "AGTPFeedbackService"],
+      "tags": ["agtp", "verification", "benchmark"],
+      "version": "2.1.0",
+      "updatedAt": "2026-09-01T00:00:00Z",
+      "agtp:did": "did:web:rlvr.example",
+      "agtp:credentialType": "SpaceManifest",
+      "agtp:feedbackService": "https://rlvr.example/.well-known/agtp/feedback",
+      "agtp:dimensions": ["accuracy", "robustness", "latency"],
+      "trustManifest": {
+        "identity": { "framework": "did", "id": "did:web:rlvr.example" },
+        "attestations": [
+          { "type": "SpaceManifest",
+            "url": "https://rlvr.example/.well-known/agtp/space/did:web:rlvr.example" }
+        ]
+      }
+    },
+    {
+      "@context": { "agtp": "https://schema.agtp.org/ontology#" },
+      "identifier": "urn:air:solver.example:tool:run-sql",
+      "displayName": "Run SQL against the sales warehouse",
+      "type": "application/mcp-server-card+json",
+      "url": "https://mcp.solver.example/.well-known/mcp-server-card.json",
+      "representativeQueries": ["query the sales warehouse", "run read-only SQL on orders"],
+      "capabilities": ["AGTPCapability"],
+      "agtp:did": "did:web:solver.example",
+      "agtp:spaces": ["did:web:rlvr.example"],
+      "agtp:feedbackService": "https://solver.example/.well-known/agtp/feedback",
+      "agtp:descriptor": "https://solver.example/agtp/capabilities/run-sql.vc.json",
+      "trustManifest": {
+        "identity": { "framework": "did", "id": "did:web:solver.example" },
+        "attestations": [
+          { "type": "CapabilityDescriptor",
+            "url": "https://solver.example/agtp/capabilities/run-sql.vc.json" }
+        ]
+      }
+    }
+  ]
+}</code></pre>
+<p>The layout of <code>trustManifest</code> follows ARD; this example shows only the members AGTP relies on. The MCP server card location is illustrative—the entry's <code>url</code> is whatever the provider serves for that ARD type.</p>
+</div>
+</section>
+
+<section id="discovery-verifying">
+<h3>Resolving and Verifying an Entry</h3>
+<p>ARD binds an entry to its publisher by requiring that the domain in the entry's <code>identifier</code> URN match the identity claimed in its <code>trustManifest</code>, and leaves the identity framework to the publisher. AGTP fixes the framework. For an entry carrying AGTP meaning:</p>
+<ol>
+<li><code>trustManifest.identity</code> MUST name the DID framework and MUST carry the same DID as <code>agtp:did</code>. An entry whose trust manifest names another framework MAY still be indexed but MUST NOT be treated as AGTP-verified.</li>
+<li>The consumer or registry MUST resolve the DID and MUST establish a <dfn id="dfn-mutual-binding">mutual binding</dfn> between the DID and the publisher domain of the URN: either the DID is a <code>did:web</code> DID whose domain equals the publisher domain, or the DID Document's <code>alsoKnownAs</code> contains the publisher origin and the entry was retrieved from that origin (directly or through a registry that records the origin as its <code>source</code>).</li>
+<li>The consumer or registry MUST fetch at least one attestation referenced from <code>trustManifest.attestations</code> (or the entry's <code>url</code> when the entry's artifact is itself an AGTP credential), verify its proof against the DID Document's <code>assertionMethod</code>, and check its status. The attestation MUST be a Space Manifest whose subject is the DID (for Space entries) or a Capability Descriptor whose <code>owner</code> is the DID and whose <code>id</code> or <code>discovery.ard</code> equals the entry's <code>identifier</code> (for capability entries), or the DID Document itself (for agent entries).</li>
+<li>Only when all three checks pass is the entry <dfn id="dfn-agtp-verified">AGTP-verified</dfn>. A registry that claims the <a class="term" href="#dfn-agtp-discovery-registry">AGTP.DiscoveryRegistry</a> class MUST perform these checks at ingestion and on a refresh schedule no longer than the attestation's <code>validUntil</code> or thirty days, MUST expose the outcome in the filterable field <code>agtp:verified</code> (boolean) with <code>agtp:verifiedAt</code>, and MUST NOT present an entry as verified on any other basis.</li>
+</ol>
+<p>Failure of any check is not an error condition for ARD; it is an unverified entry. Consumers MAY still invoke unverified resources, but MUST NOT deliver signals to feedback services learned only from unverified entries, and SHOULD prefer verified entries when several satisfy the same intent.</p>
+</section>
+
+<section id="discovery-selection">
+<h3>Selection: Relevance Is Not Trust</h3>
+<p>An ARD search response carries a <code>score</code> that ARD defines as semantic relevance and forbids interpreting as a trust, compliance or safety rating. AGTP consumers MUST honour that rule. Trust in a discovered resource comes from three sources, all of which the consumer can recompute:</p>
+<ol>
+<li>the AGTP-verified state of the entry (<a href="#discovery-verifying">section 7.2</a>);</li>
+<li>the persistent Learning Signals about the resource in the Spaces the consumer recognises, obtained from the Space's signal index and aggregated under the Space's declared rule; and</li>
+<li>the agreement between the resource's Capability Descriptor and the observations the consumer has of its behaviour.</li>
+</ol>
+<p>A registry MAY expose an <code>agtp:summary</code> facet on an entry giving, per Space, the aggregate value, the number of distinct issuers, the window and the <code>manifestHash</code> under which it was computed. Such a summary is a convenience and MUST name the Space and the signal index from which it can be recomputed. A consumer MUST NOT rank on a summary from a Space whose manifest it has not verified.</p>
+</section>
+
+<section id="discovery-registries">
+<h3>Registries and Federation</h3>
+<p>A Space MAY name the registries it recognises in its manifest's <code>discovery.registries</code>; consumers SHOULD prefer those registries when searching for resources to use within that Space. Registries SHOULD support filtering and exploration on <code>agtp:spaces</code>, <code>agtp:dimensions</code>, <code>agtp:credentialType</code> and <code>agtp:verified</code>, using the prefixed-key mechanism of ARD's query object.</p>
+<p>When a registry federates, it MUST NOT forward another registry's <code>agtp:verified</code> value as its own. It MAY either re-verify the entry or return the upstream value together with the upstream registry as <code>source</code>, in which case the consumer decides whether to trust that upstream. A registry that returns referrals rather than merged results has no obligation beyond identifying itself.</p>
+<div class="note">
+<span class="marker">Note: Discovery of Spaces is discovery of rules</span>
+<p>The ability to search for a Space by intent—"where can my agent get independent evaluation of SQL generation?"—is what lets a new participant find not only tools but the contexts in which its work will be judged, and the dimensions on which. Publishing a Space as an ARD entry, with its dimensions and representative queries, is therefore the single most useful thing a Space operator can do for the growth of the graph.</p>
+</div>
+</section>
+</section>
