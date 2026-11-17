@@ -13,7 +13,7 @@ Usage:
 Steps: concatenate parts, inline figure SVGs, number sections and build the
 table of contents, number examples and figures, add non-normative notices,
 wrap BCP 14 keywords, validate anchors, and emit the pages."""
-import os, re, sys
+import os, re, sys, json, html, hashlib
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(BUILD, ".."))
@@ -129,6 +129,8 @@ dupes = sorted({i for i in re.findall(r'\bid="([^"]+)"', body) if re.findall(r'\
 print(f"parts: {len(parts)}  sections: {len(toc)}  examples: {ex_n[0]}  figures: {fig_n[0]}  keywords wrapped: {body.count('class=\"rfc2119\"')}")
 print("missing anchors:", missing or "none")
 print("duplicate ids:", dupes or "none")
+if missing or dupes:
+    sys.exit("document anchor validation failed")
 
 # ---- 7. emit -----------------------------------------------------------------
 fonts = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
@@ -203,3 +205,45 @@ if OUT_ARTIFACT:
 
 for path, size in written:
     print(f"wrote {path} ({size // 1024} KiB)")
+
+# ---- 8. publish exact current Appendix B schema payloads and source manifest --
+schema_source = open(os.path.join(BUILD, "part13-examples-schemas.html"), encoding="utf-8").read()
+schema_dir = os.path.join(ROOT, "json")
+os.makedirs(schema_dir, exist_ok=True)
+schema_paths = []
+for payload in re.findall(r"<pre><code>(.*?)</code></pre>", schema_source, re.S):
+    decoded = html.unescape(payload)
+    try:
+        schema = json.loads(decoded)
+    except (ValueError, TypeError):
+        continue
+    if "$schema" not in schema or "$id" not in schema:
+        continue
+    name = schema["$id"].removeprefix("https://agtp.cc/json/")
+    if "/" in name or not name.endswith(".schema.json"):
+        sys.exit("unsafe schema publication path")
+    with open(os.path.join(schema_dir, name), "w", encoding="utf-8") as output:
+        output.write(decoded + "\n")
+    schema_paths.append("json/" + name)
+if len(schema_paths) != 7:
+    sys.exit("expected exactly seven Appendix B schemas")
+context_path = "context/v2.jsonld"
+context_bytes = open(os.path.join(ROOT, context_path), "rb").read()
+# Extensionless byte alias exists for manual pinned loaders; .jsonld is canonical
+# because GitHub Pages serves its JSON-LD media type without custom server rules.
+open(os.path.join(ROOT, "context/v2"), "wb").write(context_bytes)
+artifacts = {path: hashlib.sha256(open(os.path.join(ROOT, path), "rb").read()).hexdigest()
+             for path in [context_path] + sorted(schema_paths)}
+manifest = {
+    "publication": "AGTP 2.1 Editor's Draft, 17 November 2026",
+    "context_status": "newly-authored; not recovered from schema.agtp.org",
+    "canonical_context": "https://agtp.cc/context/v2.jsonld",
+    "vocabulary": "https://schema.agtp.org/ontology#",
+    "historical_draft": "https://agtp.cc/2026/ED-agtp-2.1-20260903/",
+    "copyright": "Copyright © 2024–2026 Newfoundation. No separate artifact license grant is recorded in this repository.",
+    "sha256": artifacts,
+}
+with open(os.path.join(ROOT, "context/artifacts.json"), "w", encoding="utf-8") as output:
+    json.dump(manifest, output, indent=2, ensure_ascii=False)
+    output.write("\n")
+print("published context and", len(schema_paths), "schemas; SHA256 manifest: context/artifacts.json")

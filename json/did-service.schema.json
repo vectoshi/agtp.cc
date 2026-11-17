@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agtp.cc/json/did-service.schema.json",
+  "title": "AGTP service entries in a DID Document",
+  "type": "object",
+  "required": ["id", "type", "serviceEndpoint"],
+  "properties": {
+    "id": { "type": "string", "format": "uri" },
+    "type": { "enum": ["AGTPFeedbackService", "AGTPSpaceManifest", "AGTPCapabilities",
+                       "AGTPSignalIndex", "AgenticResourceDiscovery", "MCPServer", "A2AAgentCard"] },
+    "serviceEndpoint": { "oneOf": [
+      { "type": "string", "format": "uri", "pattern": "^https://" },
+      { "type": "object", "required": ["uri"],
+        "properties": { "uri": { "type": "string", "format": "uri", "pattern": "^https://" } },
+        "additionalProperties": true } ] }
+  },
+  "additionalProperties": true
+}

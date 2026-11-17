@@ -1,0 +1,2 @@
+PyLD==3.3.0
+cryptography==46.0.5

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agtp.cc/json/receipt.schema.json",
+  "title": "AGTP Receipt (2.1)",
+  "type": "object",
+  "required": ["receiptId", "signalHash", "acceptState", "receivedAt"],
+  "properties": {
+    "receiptId": { "type": "string", "format": "uri" },
+    "signalId": { "type": "string", "format": "uri" },
+    "signalHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+    "acceptState": { "enum": ["accepted", "rejected", "pending"] },
+    "reason": { "type": "string" },
+    "receivedAt": { "type": "string", "format": "date-time" },
+    "receiver": { "type": "string", "pattern": "^did:" },
+    "space": { "type": "string", "pattern": "^did:" },
+    "nonce": { "type": "string" },
+    "idempotencyKey": { "type": "string", "format": "uuid" }
+  },
+  "if": { "properties": { "acceptState": { "const": "rejected" } } },
+  "then": { "required": ["reason"] },
+  "additionalProperties": true
+}

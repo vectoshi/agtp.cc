@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agtp.cc/json/learning-signal.schema.json",
+  "title": "AGTP Learning Signal (2.1)",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "credentialSubject", "credentialStatus", "proof"],
+  "anyOf": [ { "required": ["validFrom"] }, { "required": ["issuanceDate"] } ],
+  "properties": {
+    "@context": { "type": "array", "minItems": 2,
+      "contains": { "const": "https://agtp.cc/context/v2.jsonld" } },
+    "id": { "type": "string", "format": "uri" },
+    "type": { "type": "array",
+      "allOf": [ { "contains": { "const": "VerifiableCredential" } },
+                 { "contains": { "enum": ["LearningSignal", "LearningSignalCredential"] } } ] },
+    "issuer": { "oneOf": [ { "type": "string", "pattern": "^did:" },
+                           { "type": "object", "required": ["id"],
+                             "properties": { "id": { "type": "string", "pattern": "^did:" } } } ] },
+    "validFrom": { "type": "string", "format": "date-time" },
+    "validUntil": { "type": "string", "format": "date-time" },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["subject", "space", "dimensions", "value", "persistence", "provenance"],
+      "properties": {
+        "id": { "type": "string", "format": "uri" },
+        "subject": { "type": "string", "format": "uri" },
+        "space": { "type": "string", "pattern": "^did:" },
+        "dimensions": { "type": "array", "minItems": 1,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" } },
+        "value": { "oneOf": [ { "type": "number" },
+                              { "type": "array", "minItems": 1, "items": { "type": "number" } } ] },
+        "persistence": { "enum": ["ephemeral", "persistent"] },
+        "provenance": { "type": "string", "pattern": "^agtp://provenance\\?.*space=.*&?.*interaction=" },
+        "issuerRelation": { "enum": ["self", "affiliate", "independent"] },
+        "commitment": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "comment": { "type": "string", "maxLength": 1024 },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "manifestHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" }
+      },
+      "additionalProperties": true
+    },
+    "credentialStatus": {
+      "type": "object", "required": ["id", "type"],
+      "properties": { "type": { "enum": ["BitstringStatusListEntry", "AGTPSpaceStatus", "StatusList2021Entry"] } }
+    },
+    "credentialSchema": { "type": "object" },
+    "proof": { "oneOf": [ { "type": "object" }, { "type": "array", "items": { "type": "object" } } ] }
+  },
+  "additionalProperties": true
+}

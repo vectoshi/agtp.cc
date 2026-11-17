@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agtp.cc/json/observation-record.schema.json",
+  "title": "AGTP Observation Record (2.1)",
+  "type": "object",
+  "required": ["type", "id", "space", "actor", "sourceProtocol", "sourceRefs", "interaction", "observedAt", "privacyClass"],
+  "properties": {
+    "type": { "type": "array", "contains": { "const": "ObservationRecord" } },
+    "id": { "type": "string", "format": "uri" },
+    "space": { "type": "string", "pattern": "^did:" },
+    "actor": { "type": "string", "pattern": "^did:" },
+    "subject": { "type": "string", "format": "uri" },
+    "sourceProtocol": { "type": "string" },
+    "sourceVersion": { "type": "string" },
+    "sourceRefs": { "type": "object" },
+    "interaction": { "type": "string", "format": "uri" },
+    "artifacts": { "type": "array", "items": { "type": "object", "required": ["cid"] } },
+    "provenance": { "type": "string", "pattern": "^agtp://provenance\\?" },
+    "capabilityRefs": { "type": "array", "items": { "type": "object", "required": ["id", "contentHash"] } },
+    "policyRefs": { "type": "array" },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "privacyClass": { "enum": ["ephemeral", "persistent", "redacted", "committed-only"] },
+    "claims": { "type": "object" },
+    "proof": { "type": "object" }
+  },
+  "additionalProperties": true
+}

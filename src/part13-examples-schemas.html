@@ -8,7 +8,7 @@
 <pre><code>{
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
-    "https://schema.agtp.org/context/v2"
+    "https://agtp.cc/context/v2.jsonld"
   ],
   "id": "https://solver.example/agtp/capabilities/run-sql.vc.json",
   "type": ["VerifiableCredential", "CapabilityDescriptor"],
@@ -60,7 +60,7 @@
 <h3>An Observation Record for an MCP Tool Call</h3>
 <div class="example" data-title="MCPToolCallRecord">
 <pre><code>{
-  "@context": ["https://schema.agtp.org/context/v2"],
+  "@context": ["https://agtp.cc/context/v2.jsonld"],
   "type": ["ObservationRecord", "MCPToolCallRecord"],
   "id": "urn:uuid:c1a2b3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   "space": "did:web:rlvr.example",
@@ -90,7 +90,7 @@
 <h3>A Signed Interaction Receipt</h3>
 <div class="example" data-title="InteractionReceipt issued by a Space">
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:7e8f9a0b-1c2d-4e3f-8a9b-0c1d2e3f4a5b",
   "type": ["VerifiableCredential", "InteractionReceipt"],
   "issuer": "did:web:rlvr.example",
@@ -118,7 +118,7 @@
 <h3>An Anchor Commitment Referencing an ERC-8004 Validation</h3>
 <div class="example" data-title="AnchorCommitment">
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:3f4a5b6c-7d8e-4f9a-8b0c-1d2e3f4a5b6c",
   "type": ["VerifiableCredential", "AnchorCommitment"],
   "issuer": "did:pkh:eip155:1:0x8ba1f109551bD432803012645Ac136ddd64DBA72",
@@ -179,7 +179,7 @@
 <h3>A Distilled Persistent Signal with a Commitment</h3>
 <div class="example" data-title="Persistent summary of ephemeral reasoning checks">
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5e",
   "type": ["VerifiableCredential", "LearningSignal"],
   "issuer": "did:web:lab.example",
@@ -286,7 +286,7 @@ SELECT SUM(amount) FROM `acme.sales.orders`
 WHERE EXTRACT(YEAR FROM recognised_at) = @year
 ```</code></pre>
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
   "type": ["VerifiableCredential", "LearningSignal"],
   "issuer": "did:web:attester.example",
@@ -333,20 +333,21 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schemas" class="appendix">
 <h2>JSON Schemas</h2>
-<p>The schemas below are normative constraints on the JSON representation of AGTP objects, using JSON Schema 2020-12 <cite>[<a href="#bib-json-schema">JSON-SCHEMA</a>]</cite>. They deliberately permit additional properties, because AGTP objects are extensible JSON-LD; they check the presence and shape of what this specification requires. The prose of <a href="#core-objects">section 5</a> prevails where the two differ. The schemas are also published at <code>https://schema.agtp.org/json/</code> under the names given in each <code>$id</code>.</p>
+<p>The schemas below are normative constraints on the JSON representation of AGTP objects, using JSON Schema 2020-12 <cite>[<a href="#bib-json-schema">JSON-SCHEMA</a>]</cite>. They deliberately permit additional properties, because AGTP objects are extensible JSON-LD; they check the presence and shape of what this specification requires. The prose of <a href="#core-objects">section 5</a> prevails where the two differ. The schemas are also published at <code>https://agtp.cc/json/</code> under the names given in each <code>$id</code>.</p>
 
 <section id="schema-learning-signal">
 <h3>Learning Signal</h3>
+<p><a href="https://agtp.cc/json/learning-signal.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/learning-signal.schema.json",
+  "$id": "https://agtp.cc/json/learning-signal.schema.json",
   "title": "AGTP Learning Signal (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "credentialSubject", "credentialStatus", "proof"],
   "anyOf": [ { "required": ["validFrom"] }, { "required": ["issuanceDate"] } ],
   "properties": {
     "@context": { "type": "array", "minItems": 2,
-      "contains": { "const": "https://schema.agtp.org/context/v2" } },
+      "contains": { "const": "https://agtp.cc/context/v2.jsonld" } },
     "id": { "type": "string", "format": "uri" },
     "type": { "type": "array",
       "allOf": [ { "contains": { "const": "VerifiableCredential" } },
@@ -391,9 +392,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-space-manifest">
 <h3>Space Manifest</h3>
+<p><a href="https://agtp.cc/json/space-manifest.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/space-manifest.schema.json",
+  "$id": "https://agtp.cc/json/space-manifest.schema.json",
   "title": "AGTP Space Manifest (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "credentialSubject", "credentialStatus", "proof"],
@@ -453,9 +455,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-receipt">
 <h3>Receipt</h3>
+<p><a href="https://agtp.cc/json/receipt.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/receipt.schema.json",
+  "$id": "https://agtp.cc/json/receipt.schema.json",
   "title": "AGTP Receipt (2.1)",
   "type": "object",
   "required": ["receiptId", "signalHash", "acceptState", "receivedAt"],
@@ -479,9 +482,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-capability-descriptor">
 <h3>Capability Descriptor</h3>
+<p><a href="https://agtp.cc/json/capability-descriptor.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/capability-descriptor.schema.json",
+  "$id": "https://agtp.cc/json/capability-descriptor.schema.json",
   "title": "AGTP Capability Descriptor (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
@@ -530,9 +534,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-anchor-commitment">
 <h3>Anchor Commitment</h3>
+<p><a href="https://agtp.cc/json/anchor-commitment.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/anchor-commitment.schema.json",
+  "$id": "https://agtp.cc/json/anchor-commitment.schema.json",
   "title": "AGTP Anchor Commitment (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
@@ -564,9 +569,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-observation-record">
 <h3>Observation Record</h3>
+<p><a href="https://agtp.cc/json/observation-record.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/observation-record.schema.json",
+  "$id": "https://agtp.cc/json/observation-record.schema.json",
   "title": "AGTP Observation Record (2.1)",
   "type": "object",
   "required": ["type", "id", "space", "actor", "sourceProtocol", "sourceRefs", "interaction", "observedAt", "privacyClass"],
@@ -595,9 +601,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-did-service">
 <h3>DID Document Service Entries</h3>
+<p><a href="https://agtp.cc/json/did-service.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/did-service.schema.json",
+  "$id": "https://agtp.cc/json/did-service.schema.json",
   "title": "AGTP service entries in a DID Document",
   "type": "object",
   "required": ["id", "type", "serviceEndpoint"],

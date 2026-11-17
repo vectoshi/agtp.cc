@@ -1,0 +1,18 @@
+{
+  "publication": "AGTP 2.1 Editor's Draft, 17 November 2026",
+  "context_status": "newly-authored; not recovered from schema.agtp.org",
+  "canonical_context": "https://agtp.cc/context/v2.jsonld",
+  "vocabulary": "https://schema.agtp.org/ontology#",
+  "historical_draft": "https://agtp.cc/2026/ED-agtp-2.1-20260903/",
+  "copyright": "Copyright © 2024–2026 Newfoundation. No separate artifact license grant is recorded in this repository.",
+  "sha256": {
+    "context/v2.jsonld": "55eb9683a5ed6317fbe46c65a80f444b5d68b80091fb487f455c90e5bed57420",
+    "json/anchor-commitment.schema.json": "4d8b9d91064e820bde4276280f5e33b6e9f1714ad689ee5983c31482cdf60cc0",
+    "json/capability-descriptor.schema.json": "bdd5ca260c592fb18f7cdc147e6bd69b3a9dd7e830522256dc0a0250068535e4",
+    "json/did-service.schema.json": "119c8415f7d45f1f5b79cc243500ce0e2158991dc5c4b70e66c573b431bcd9a1",
+    "json/learning-signal.schema.json": "12b177fcf1ee726a4f67b852e746a24e6e9d4cb5c843a3a9d5db55bdfcaea3af",
+    "json/observation-record.schema.json": "33f3600e062fb42591d82e0daf7aa8bc4db9a26a43fdffb16a95068dbb5a4368",
+    "json/receipt.schema.json": "4862c97e9b7a21fd84aa4d084117af2ddaa92c9420a78624747c11d4e34fd988",
+    "json/space-manifest.schema.json": "86696847514ac01d73c67f9a5ad1a6c3b1d086d94100d328bd69f155e0efc2ba"
+  }
+}
