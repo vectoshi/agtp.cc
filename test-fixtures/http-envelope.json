@@ -1,0 +1,60 @@
+{
+  "profile": "http/1.1",
+  "editorial_status": "pre-canonicalization error examples; no synthetic signal hash",
+  "cases": [
+    {
+      "name": "authenticated-malformed-envelope",
+      "request": {
+        "method": "POST",
+        "sender": "synthetic-member",
+        "idempotencyKey": "3b4f0d2c-6a1e-4f7b-9c1d-2e8a5b7f9d10",
+        "body": "{"
+      },
+      "nonceConsumed": true,
+      "canonicalSignalExists": false,
+      "response": {
+        "status": 400,
+        "contentType": "application/problem+json",
+        "body": {
+          "type": "https://schema.agtp.org/problems/malformed",
+          "title": "Malformed envelope",
+          "status": 400
+        },
+        "headers": {
+          "Replay-Nonce": "synthetic-fresh-nonce-1",
+          "Cache-Control": "no-store"
+        }
+      }
+    },
+    {
+      "name": "same-sender-key-after-malformed-envelope",
+      "request": {
+        "method": "POST",
+        "sender": "synthetic-member",
+        "idempotencyKey": "3b4f0d2c-6a1e-4f7b-9c1d-2e8a5b7f9d10",
+        "body": "{replacement"
+      },
+      "nonceConsumed": true,
+      "bodyProcessed": false,
+      "canonicalSignalExists": false,
+      "response": {
+        "status": 409,
+        "contentType": "application/problem+json",
+        "body": {
+          "type": "https://schema.agtp.org/problems/duplicate-delivery",
+          "title": "Duplicate delivery",
+          "status": 409,
+          "originalProblem": {
+            "type": "https://schema.agtp.org/problems/malformed",
+            "title": "Malformed envelope",
+            "status": 400
+          }
+        },
+        "headers": {
+          "Replay-Nonce": "synthetic-fresh-nonce-2",
+          "Cache-Control": "no-store"
+        }
+      }
+    }
+  ]
+}

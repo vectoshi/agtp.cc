@@ -241,10 +241,10 @@ dl.bib dd { margin: .1rem 0 0 0; }
   </a>
   <h1>Agent Graph Trust Protocol (AGTP) 2.1</h1>
   <p class="subtitle">Identity, provenance and learning signals for the agent graph</p>
-  <h2 id="state">Editor's Draft, 17 November 2026</h2>
+  <h2 id="state">Editor's Draft, 17 November 2026, editorial revision 1</h2>
   <dl>
     <dt>This version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117/">https://agtp.cc/2026/ED-agtp-2.1-20261117/</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117-editorial1/">https://agtp.cc/2026/ED-agtp-2.1-20261117-editorial1/</a></dd>
     <dt>Latest published version:</dt>
     <dd><a href="https://agtp.cc/">https://agtp.cc/</a></dd>
     <dt>Latest editor's draft:</dt>
@@ -252,13 +252,13 @@ dl.bib dd { margin: .1rem 0 0 0; }
     <dt>Protocol repository:</dt>
     <dd><a href="https://github.com/new-foundation/agtp">https://github.com/new-foundation/agtp</a></dd>
     <dt>Previous version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20260903/">AGTP 2.1 Editor’s Draft, 3 September 2026</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117/">AGTP 2.1 Editor’s Draft, 17 November 2026</a></dd>
     <dt>Editors:</dt>
     <dd>The AGTP Consortium, convened by <a href="https://newcoin.org/">Newfoundation</a></dd>
     <dt>Feedback:</dt>
     <dd><a href="https://github.com/vectoshi/agtp.cc/issues">GitHub issues</a> &middot; <a href="mailto:contact@newcoin.org">contact@newcoin.org</a></dd>
     <dt>Errata:</dt>
-    <dd>This revision publishes the previously missing machine-readable context and schema resources; see the publication notes below.</dd>
+    <dd>This editorial revision explains pre-canonicalisation HTTP errors and duplicate responses; normative requirement text, schema and context bytes are unchanged. See the envelope-failure note in section 9.2.</dd>
     <dt>Companion pages:</dt>
     <dd><a href="https://newcoin.org/">newcoin.org</a> &middot; <a href="https://newcoin.org/Open_Learning">Newcoin: Open Learning</a> &middot; <a href="https://newcoin.org/Core_Concepts">Newcoin: Core Concepts</a></dd>
   </dl>
@@ -1762,6 +1762,11 @@ See also [robustness](/dimensions/robustness.md) and the
 <li>The <code>Idempotency-Key</code> is a sender-generated UUID <cite>[<a href="#bib-rfc9562">RFC9562</a>]</cite>. A sender <em class="rfc2119">MUST</em> use the same key for every retry of the same signal to the same receiver and <em class="rfc2119">SHOULD</em> use the same key when delivering the same signal to the subject and to the Space. Receivers <em class="rfc2119">MUST</em> remember keys for at least 24 hours and <em class="rfc2119">MUST</em> respond to a repeated key from the same authenticated sender with <code>409</code>, the problem type <code>duplicate-delivery</code> and the original receipt in the problem's <code>receipt</code> member, without processing the body again.</li>
 <li>Independently of the key, receivers <em class="rfc2119">MUST</em> deduplicate by <code>signalHash</code>: a signal whose hash was already accepted <em class="rfc2119">MUST</em> be answered with <code>200</code> and the existing receipt.</li>
 </ol>
+<div class="note" id="http-envelope-errors">
+<p><strong>Envelope failures and duplicate responses.</strong> The receipt requirement applies once there is a canonicalisable delivered signal. An unparseable JSON envelope has no canonical <code>signalHash</code> and therefore no receipt; its response is the <code>malformed</code> Problem Details of section 9.3. Nonce consumption and fresh response nonces still apply. A hash of malformed request bytes is not a signal hash.</p>
+<p>When an authenticated sender and idempotency key have already been recorded for such an envelope failure, a duplicate response can retain the original immutable Problem Details in an <code>originalProblem</code> extension instead of a nonexistent <code>receipt</code>. The outer response remains <code>409 duplicate-delivery</code>, with outer <code>status: 409</code>; the nested original problem retains its original status. The replacement body is not processed. This is distinct from a canonicalisable signal rejected by verification or validation, for which the original receipt and its real signal hash remain available.</p>
+<p>The <a href="https://agtp.cc/test-fixtures/http-envelope.json">pre-canonicalisation examples</a> show both responses. They do not change the nonce, 24-hour sender/key retention, parsed-signal receipt, or accepted-signal hash deduplication requirements above.</p>
+</div>
 </section>
 
 <section id="http-errors">
