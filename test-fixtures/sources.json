@@ -1,0 +1,17 @@
+{
+  "w3c_eddsa_commit": "13e7070534d1ba1c2987cb26bfb1535e0f15bb72",
+  "sha256": {
+    "contexts/credentials-examples-v2.jsonld": "57393fbc69d6efb9b9b5dc9cb6b9880b0944360abfe2eaf459c9e58cf2279d7c",
+    "contexts/credentials-v2.jsonld": "59955ced6697d61e03f2b2556febe5308ab16842846f5b586d7f1f7adec92734",
+    "w3c-eddsa-rdfc-2022/canonDocDataInt.txt": "517744132ae165a5349155bef0bb0cf2258fff99dfe1dbd914b938d775a36017",
+    "w3c-eddsa-rdfc-2022/combinedHashDataInt.txt": "c3a98e635e0324a501828beebe1d9efaac58cc5972aa7ef4477112e925e259d8",
+    "w3c-eddsa-rdfc-2022/docHashDataInt.txt": "edc4dd4272a9054dee8c863b189e819ae98a3e0c6b1672f55ebf0e7c19a66cb2",
+    "w3c-eddsa-rdfc-2022/keyPair.json": "528d9051637b0186f73674610d344555403adbdabc5767f299cc22b40e64d9b5",
+    "w3c-eddsa-rdfc-2022/proofCanonDataInt.txt": "bea7b7acfbad0126b135104024a5f1733e705108f42d59668b05c0c50004c6b0",
+    "w3c-eddsa-rdfc-2022/proofConfigDataInt.json": "db7059b59c666f23f8f2b56cb82b438462f880557f9d2e227b6842ddae1563e2",
+    "w3c-eddsa-rdfc-2022/proofHashDataInt.txt": "be981a6c42ab16f253dda654b7e17cc07dc2ca2b5a77ef396d5353f58d7b5883",
+    "w3c-eddsa-rdfc-2022/sigHexDataInt.txt": "0d3b4af927e4e9cbcf9c8873bb80d9fca2752eec65265bc2e3e51699bf266f6e",
+    "w3c-eddsa-rdfc-2022/signedDataInt.json": "0867c0b2e086a29901c6d53851dd87590c152b6e4959bb835e5edf7294bfb895",
+    "w3c-eddsa-rdfc-2022/unsigned.json": "060626e6046fc6f39a4aecc55a60b61071ab9aa3f8fd05b8626f8787ec0ff912"
+  }
+}

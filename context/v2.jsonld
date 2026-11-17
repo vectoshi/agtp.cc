@@ -1,0 +1,214 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "@protected": true,
+    "id": "@id",
+    "type": "@type",
+    "agtp": {
+      "@id": "https://schema.agtp.org/ontology#",
+      "@prefix": true
+    },
+    "LearningSignal": "https://schema.agtp.org/ontology#LearningSignal",
+    "SpaceManifest": "https://schema.agtp.org/ontology#SpaceManifest",
+    "InteractionReceipt": "https://schema.agtp.org/ontology#InteractionReceipt",
+    "CapabilityDescriptor": "https://schema.agtp.org/ontology#CapabilityDescriptor",
+    "AnchorCommitment": "https://schema.agtp.org/ontology#AnchorCommitment",
+    "DelegationCredential": "https://schema.agtp.org/ontology#DelegationCredential",
+    "PolicyAssertion": "https://schema.agtp.org/ontology#PolicyAssertion",
+    "ObservationRecord": "https://schema.agtp.org/ontology#ObservationRecord",
+    "AGTPSpaceStatus": "https://schema.agtp.org/ontology#AGTPSpaceStatus",
+    "LearningSignalCredential": "https://schema.agtp.org/ontology#LearningSignal",
+    "SpaceManifestCredential": "https://schema.agtp.org/ontology#SpaceManifest",
+    "InteractionReceiptCredential": "https://schema.agtp.org/ontology#InteractionReceipt",
+    "CapabilityDescriptorCredential": "https://schema.agtp.org/ontology#CapabilityDescriptor",
+    "AnchorCommitmentCredential": "https://schema.agtp.org/ontology#AnchorCommitment",
+    "subject": {
+      "@id": "https://schema.agtp.org/ontology#subject",
+      "@type": "@id"
+    },
+    "space": {
+      "@id": "https://schema.agtp.org/ontology#space",
+      "@type": "@id"
+    },
+    "owner": {
+      "@id": "https://schema.agtp.org/ontology#owner",
+      "@type": "@id"
+    },
+    "actor": {
+      "@id": "https://schema.agtp.org/ontology#actor",
+      "@type": "@id"
+    },
+    "receiver": {
+      "@id": "https://schema.agtp.org/ontology#receiver",
+      "@type": "@id"
+    },
+    "interaction": {
+      "@id": "https://schema.agtp.org/ontology#interaction",
+      "@type": "@id"
+    },
+    "provenance": {
+      "@id": "https://schema.agtp.org/ontology#provenance",
+      "@type": "@id"
+    },
+    "receiptId": {
+      "@id": "https://schema.agtp.org/ontology#receiptId",
+      "@type": "@id"
+    },
+    "signalId": {
+      "@id": "https://schema.agtp.org/ontology#signalId",
+      "@type": "@id"
+    },
+    "status": {
+      "@id": "https://schema.agtp.org/ontology#status",
+      "@type": "@id"
+    },
+    "revocation": {
+      "@id": "https://schema.agtp.org/ontology#revocation",
+      "@type": "@id"
+    },
+    "resource": {
+      "@id": "https://schema.agtp.org/ontology#resource",
+      "@type": "@id"
+    },
+    "ref": {
+      "@id": "https://schema.agtp.org/ontology#ref",
+      "@type": "@id"
+    },
+    "uri": {
+      "@id": "https://schema.agtp.org/ontology#uri",
+      "@type": "@id"
+    },
+    "impl": {
+      "@id": "https://schema.agtp.org/ontology#impl",
+      "@type": "@id"
+    },
+    "observedAt": {
+      "@id": "https://schema.agtp.org/ontology#observedAt",
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "receivedAt": {
+      "@id": "https://schema.agtp.org/ontology#receivedAt",
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "anchoredAt": {
+      "@id": "https://schema.agtp.org/ontology#anchoredAt",
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "dimensions": {
+      "@id": "https://schema.agtp.org/ontology#dimensions",
+      "@type": "@json"
+    },
+    "value": {
+      "@id": "https://schema.agtp.org/ontology#value",
+      "@type": "@json"
+    },
+    "aggregation": {
+      "@id": "https://schema.agtp.org/ontology#aggregation",
+      "@type": "@json"
+    },
+    "persistence_policy": {
+      "@id": "https://schema.agtp.org/ontology#persistencePolicy",
+      "@type": "@json"
+    },
+    "capabilities": {
+      "@id": "https://schema.agtp.org/ontology#capabilities",
+      "@type": "@json"
+    },
+    "knowledge": {
+      "@id": "https://schema.agtp.org/ontology#knowledge",
+      "@type": "@json"
+    },
+    "discovery": {
+      "@id": "https://schema.agtp.org/ontology#discovery",
+      "@type": "@json"
+    },
+    "admission": {
+      "@id": "https://schema.agtp.org/ontology#admission",
+      "@type": "@json"
+    },
+    "interface": {
+      "@id": "https://schema.agtp.org/ontology#interface",
+      "@type": "@json"
+    },
+    "inputSchema": {
+      "@id": "https://schema.agtp.org/ontology#inputSchema",
+      "@type": "@json"
+    },
+    "outputSchema": {
+      "@id": "https://schema.agtp.org/ontology#outputSchema",
+      "@type": "@json"
+    },
+    "constraints": {
+      "@id": "https://schema.agtp.org/ontology#constraints",
+      "@type": "@json"
+    },
+    "sourceArtifacts": {
+      "@id": "https://schema.agtp.org/ontology#sourceArtifacts",
+      "@type": "@json"
+    },
+    "covered": {
+      "@id": "https://schema.agtp.org/ontology#covered",
+      "@type": "@json"
+    },
+    "reference": {
+      "@id": "https://schema.agtp.org/ontology#reference",
+      "@type": "@json"
+    },
+    "sourceRefs": {
+      "@id": "https://schema.agtp.org/ontology#sourceRefs",
+      "@type": "@json"
+    },
+    "artifacts": {
+      "@id": "https://schema.agtp.org/ontology#artifacts",
+      "@type": "@json"
+    },
+    "capabilityRefs": {
+      "@id": "https://schema.agtp.org/ontology#capabilityRefs",
+      "@type": "@json"
+    },
+    "policyRefs": {
+      "@id": "https://schema.agtp.org/ontology#policyRefs",
+      "@type": "@json"
+    },
+    "claims": {
+      "@id": "https://schema.agtp.org/ontology#claims",
+      "@type": "@json"
+    },
+    "dimensionRefs": {
+      "@id": "https://schema.agtp.org/ontology#dimensionRefs",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "spaces": {
+      "@id": "https://schema.agtp.org/ontology#spaces",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "version": "https://schema.agtp.org/ontology#version",
+    "manifestHash": "https://schema.agtp.org/ontology#manifestHash",
+    "persistence": "https://schema.agtp.org/ontology#persistence",
+    "issuerRelation": "https://schema.agtp.org/ontology#issuerRelation",
+    "commitment": "https://schema.agtp.org/ontology#commitment",
+    "confidence": "https://schema.agtp.org/ontology#confidence",
+    "comment": "https://schema.agtp.org/ontology#comment",
+    "signalHash": "https://schema.agtp.org/ontology#signalHash",
+    "acceptState": "https://schema.agtp.org/ontology#acceptState",
+    "reason": "https://schema.agtp.org/ontology#reason",
+    "nonce": "https://w3id.org/security#nonce",
+    "idempotencyKey": "https://schema.agtp.org/ontology#idempotencyKey",
+    "interfaceType": "https://schema.agtp.org/ontology#interfaceType",
+    "contentHash": "https://schema.agtp.org/ontology#contentHash",
+    "root": "https://schema.agtp.org/ontology#root",
+    "tree": "https://schema.agtp.org/ontology#tree",
+    "hashAlgorithm": "https://schema.agtp.org/ontology#hashAlgorithm",
+    "count": "https://schema.agtp.org/ontology#count",
+    "chain": "https://schema.agtp.org/ontology#chain",
+    "sourceProtocol": "https://schema.agtp.org/ontology#sourceProtocol",
+    "sourceVersion": "https://schema.agtp.org/ontology#sourceVersion",
+    "privacyClass": "https://schema.agtp.org/ontology#privacyClass",
+    "AGTPFeedbackService": "https://schema.agtp.org/ontology#AGTPFeedbackService",
+    "AGTPSpaceManifest": "https://schema.agtp.org/ontology#AGTPSpaceManifest",
+    "AGTPCapabilities": "https://schema.agtp.org/ontology#AGTPCapabilities",
+    "AGTPSignalIndex": "https://schema.agtp.org/ontology#AGTPSignalIndex"
+  }
+}

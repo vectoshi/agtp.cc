@@ -223,8 +223,8 @@ dl.bib dd { margin: .1rem 0 0 0; }
 </style>
 </head>
 <body>
-<div class="band" aria-hidden="true"><span>AGTP · Editor's Draft · 3 September 2026</span></div>
-<div class="band-mobile" aria-hidden="true">AGTP · Editor's Draft · 3 September 2026</div>
+<div class="band" aria-hidden="true"><span>AGTP · Editor's Draft · 17 November 2026</span></div>
+<div class="band-mobile" aria-hidden="true">AGTP · Editor's Draft · 17 November 2026</div>
 <main>
 <div class="head">
   <a class="logo" href="./" aria-label="AGTP home">
@@ -241,10 +241,10 @@ dl.bib dd { margin: .1rem 0 0 0; }
   </a>
   <h1>Agent Graph Trust Protocol (AGTP) 2.1</h1>
   <p class="subtitle">Identity, provenance and learning signals for the agent graph</p>
-  <h2 id="state">Editor's Draft, 3 September 2026</h2>
+  <h2 id="state">Editor's Draft, 17 November 2026</h2>
   <dl>
     <dt>This version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20260903/">https://agtp.cc/2026/ED-agtp-2.1-20260903/</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117/">https://agtp.cc/2026/ED-agtp-2.1-20261117/</a></dd>
     <dt>Latest published version:</dt>
     <dd><a href="https://agtp.cc/">https://agtp.cc/</a></dd>
     <dt>Latest editor's draft:</dt>
@@ -252,13 +252,13 @@ dl.bib dd { margin: .1rem 0 0 0; }
     <dt>Protocol repository:</dt>
     <dd><a href="https://github.com/new-foundation/agtp">https://github.com/new-foundation/agtp</a></dd>
     <dt>Previous version:</dt>
-    <dd>AGTP v2 specification text (repository README, 24 February 2026)</dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20260903/">AGTP 2.1 Editor’s Draft, 3 September 2026</a></dd>
     <dt>Editors:</dt>
     <dd>The AGTP Consortium, convened by <a href="https://newcoin.org/">Newfoundation</a></dd>
     <dt>Feedback:</dt>
     <dd><a href="https://github.com/vectoshi/agtp.cc/issues">GitHub issues</a> &middot; <a href="mailto:contact@newcoin.org">contact@newcoin.org</a></dd>
     <dt>Errata:</dt>
-    <dd>No errata have been recorded for this draft.</dd>
+    <dd>This revision publishes the previously missing machine-readable context and schema resources; see the publication notes below.</dd>
     <dt>Companion pages:</dt>
     <dd><a href="https://newcoin.org/">newcoin.org</a> &middot; <a href="https://newcoin.org/Open_Learning">Newcoin: Open Learning</a> &middot; <a href="https://newcoin.org/Core_Concepts">Newcoin: Core Concepts</a></dd>
   </dl>
@@ -278,6 +278,7 @@ dl.bib dd { margin: .1rem 0 0 0; }
 <p>This document is an Editor's Draft of AGTP 2.1 prepared for the AGTP Consortium and published by Newfoundation. It consolidates the AGTP v2 specification text, the binding profiles developed during the 2026 convergence work and new profiles for Agentic Resource Discovery and the Open Knowledge Format into a single document laid out as a standards-track specification. It is not yet a Consortium Recommendation; it is published to gather implementation experience and review.</p>
 <p>This document is not a product of the World Wide Web Consortium, the Internet Engineering Task Force, the Agentic AI Foundation, the A2A project, the ARD project or Google Cloud. It references specifications maintained by those bodies and does not modify them. Where a referenced specification changes, that specification prevails and this document will be updated through the change process in <a href="#versioning">section 13</a>.</p>
 <p>Changes relative to AGTP v2 are listed in <a href="#changes">Appendix G</a>. The most consequential are the alignment with Verifiable Credentials 2.0 and the Data Integrity cryptosuites, the introduction of the credential family (<a href="#credential-family">section 4.2</a>), the discovery profile (<a href="#discovery">section 7</a>) and the knowledge profile (<a href="#knowledge">section 8</a>). Producers and consumers of AGTP v2 objects remain conformant during the overlap window described in <a href="#versioning">section 13</a>.</p>
+<p id="artifact-publication">This revision newly authors the protected <a href="https://agtp.cc/context/v2.jsonld">AGTP v2 context</a> and publishes the Appendix B <a href="https://agtp.cc/json/learning-signal.schema.json">JSON Schema resources</a> on this specification’s existing publication origin. These context bytes were not recovered from the former schema.agtp.org endpoint. The 3 September draft remains unchanged. Vocabulary IRIs under <code>https://schema.agtp.org/ontology#</code> remain stable identifiers. New credentials <em class="rfc2119">MUST</em> use <code>https://agtp.cc/context/v2.jsonld</code>; consumers of historical credentials <em class="rfc2119">MUST</em> pin the exact context artifact they used and <em class="rfc2119">MUST NOT</em> reinterpret existing proofs with newly authored mappings. See <a href="https://agtp.cc/context/README.md">context publication and migration notes</a> for mappings, limitations and artifact digests.</p>
 <p>Comments are welcome through the issue tracker of the specification repository or by email to the editors. Implementers are asked to report which conformance classes they claim (<a href="#conformance">section 1.5</a>) so that the conformance suite in <a href="#conformance-descriptors">Appendix D</a> can be extended from real deployments.</p>
 </section>
 
@@ -566,7 +567,7 @@ dl.bib dd { margin: .1rem 0 0 0; }
 <pre><code>{
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
-    "https://schema.agtp.org/context/v2"
+    "https://agtp.cc/context/v2.jsonld"
   ],
   "id": "urn:uuid:9f1c2a6e-3d0b-4b41-9a7e-5f0c7d2f1a10",
   "type": ["VerifiableCredential", "LearningSignal"],
@@ -991,7 +992,7 @@ pvalue            = *( unreserved / pct-encoded / ":" / "," )</code></pre>
 </div>
 <p>The following rules apply to every AGTP credential:</p>
 <ol>
-<li>The <code>@context</code> array <em class="rfc2119">MUST</em> begin with <code>https://www.w3.org/ns/credentials/v2</code> and <em class="rfc2119">MUST</em> include <code>https://schema.agtp.org/context/v2</code>. Profile contexts <em class="rfc2119">MAY</em> follow.</li>
+<li>The <code>@context</code> array <em class="rfc2119">MUST</em> begin with <code>https://www.w3.org/ns/credentials/v2</code> and <em class="rfc2119">MUST</em> include <code>https://agtp.cc/context/v2.jsonld</code>. Profile contexts <em class="rfc2119">MAY</em> follow.</li>
 <li>The <code>type</code> array <em class="rfc2119">MUST</em> include <code>VerifiableCredential</code> and exactly one AGTP credential type. The AGTP context also defines the aliases <code>LearningSignalCredential</code>, <code>SpaceManifestCredential</code>, <code>InteractionReceiptCredential</code>, <code>CapabilityDescriptorCredential</code> and <code>AnchorCommitmentCredential</code>, mapped to the same IRIs; consumers <em class="rfc2119">MUST</em> treat an alias as equivalent to its short form.</li>
 <li><code>issuer</code> <em class="rfc2119">MUST</em> be a DID or an object whose <code>id</code> is a DID. <code>validFrom</code> <em class="rfc2119">MUST</em> be present. <code>validUntil</code> <em class="rfc2119">MUST</em> be present on a Space Manifest and <em class="rfc2119">MAY</em> be present elsewhere.</li>
 <li><code>id</code> <em class="rfc2119">SHOULD</em> be present and <em class="rfc2119">SHOULD</em> be a UUID URN unless the credential is served from a stable URL, in which case that URL <em class="rfc2119">MAY</em> be used.</li>
@@ -1014,7 +1015,8 @@ pvalue            = *( unreserved / pct-encoded / ":" / "," )</code></pre>
 
 <section id="extensibility">
 <h3><bdi class="secno">4.4.</bdi> Extensibility<a class="self-link" href="#extensibility" aria-label="Permalink for section 4.4">§</a></h3>
-<p>AGTP objects are JSON-LD 1.1 documents <cite>[<a href="#bib-json-ld11">JSON-LD11</a>]</cite>. The AGTP vocabulary is identified by the IRI <code>https://schema.agtp.org/ontology#</code>, and the versioned context <code>https://schema.agtp.org/context/v2</code> maps the terms used in this specification to that vocabulary. Term definitions in the context are protected; an extension context <em class="rfc2119">MUST NOT</em> redefine them.</p>
+<p>AGTP objects are JSON-LD 1.1 documents <cite>[<a href="#bib-json-ld11">JSON-LD11</a>]</cite>. The AGTP vocabulary is identified by the IRI <code>https://schema.agtp.org/ontology#</code>, and the versioned context <code>https://agtp.cc/context/v2.jsonld</code> maps the terms used in this specification to that vocabulary. Term definitions in the context are protected; an extension context <em class="rfc2119">MUST NOT</em> redefine them.</p>
+<p>The context defines ordered or polymorphic payload properties (<code>dimensions</code>, <code>value</code>, <code>covered</code>), open nested policy/profile objects and embedded JSON Schema payloads as JSON-LD <code>@json</code> literals. This preserves array order, scalar versus array shape, local dimension identifiers and unknown nested policy keys in the signed RDF dataset. In particular, <code>dimensions</code> and <code>value</code> <em class="rfc2119">MUST NOT</em> be treated as unordered RDF sets. Identity and relationship properties remain IRI-valued and timestamps retain XML Schema dateTime types. The receipt <code>nonce</code> uses the existing security vocabulary <code>https://w3id.org/security#nonce</code> so it composes with the VC Data Integrity proof context without redefining that protected term. These are newly published encoding rules in this revision, not recovered historical context bytes. The optional DelegationCredential and PolicyAssertion classes have no core property schema in this draft; profiles defining their payloads <em class="rfc2119">MUST</em> use explicit extension namespaces.</p>
 <p>Extensions are made by adding properties in a separate namespace, either by including an additional context that defines the terms or by using full IRIs or compact IRIs with a declared prefix. Binding profiles define their terms in profile namespaces of the form <code>https://schema.agtp.org/profiles/&lt;name&gt;#</code>. Consumers <em class="rfc2119">MUST</em> ignore properties they do not understand and <em class="rfc2119">MUST</em> preserve them when re-serialising an object whose proof they intend to keep valid. The AGTP context reserves the <code>agtp</code> prefix for the core vocabulary.</p>
 <p>New dimension identifiers require no extension; they are declared by Spaces. New credential types, service types, interface types, privacy classes, aggregation functions and provenance parameters are added through the registries of <a href="#registries">Appendix F</a>.</p>
 </section>
@@ -1116,7 +1118,7 @@ pvalue            = *( unreserved / pct-encoded / ":" / "," )</code></pre>
 <pre><code>{
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
-    "https://schema.agtp.org/context/v2"
+    "https://agtp.cc/context/v2.jsonld"
   ],
   "id": "https://rlvr.example/.well-known/agtp/space/did:web:rlvr.example",
   "type": ["VerifiableCredential", "SpaceManifest"],
@@ -1206,7 +1208,7 @@ pvalue            = *( unreserved / pct-encoded / ":" / "," )</code></pre>
 <pre><code>{
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
-    "https://schema.agtp.org/context/v2"
+    "https://agtp.cc/context/v2.jsonld"
   ],
   "id": "urn:uuid:0c9d7b5e-1f2a-4d3c-8e6f-7a5b4c3d2e1f",
   "type": ["VerifiableCredential", "LearningSignal"],
@@ -1809,7 +1811,7 @@ See also [robustness](/dimensions/robustness.md) and the
   "hashing": ["rdfc-1.0+sha2-256"],
   "features": ["metricsFeed", "signalIndex", "signedReceipts"],
   "extensions": [
-    "https://schema.agtp.org/context/v2",
+    "https://agtp.cc/context/v2.jsonld",
     "https://rlvr.example/knowledge/dimensions/"
   ],
   "updatedAt": "2026-09-03T08:00:00Z"
@@ -2134,7 +2136,7 @@ See also [robustness](/dimensions/robustness.md) and the
 <thead><tr><th>Aspect</th><th>AGTP v2</th><th>AGTP 2.1</th></tr></thead>
 <tbody>
 <tr><td>Base credential context</td><td><code>https://www.w3.org/2018/credentials/v1</code></td><td><code>https://www.w3.org/ns/credentials/v2</code></td></tr>
-<tr><td>AGTP context</td><td><code>https://schema.agtp.org/context/v1</code></td><td><code>https://schema.agtp.org/context/v2</code> (v1 remains served)</td></tr>
+<tr><td>AGTP context</td><td><code>https://schema.agtp.org/context/v1</code></td><td><code>https://agtp.cc/context/v2.jsonld</code> (v1 remains served)</td></tr>
 <tr><td>Issuance time</td><td><code>issuanceDate</code></td><td><code>validFrom</code></td></tr>
 <tr><td>Manifest validity</td><td><code>credentialSubject.validFrom</code> / <code>validUntil</code></td><td>credential-level <code>validFrom</code> / <code>validUntil</code>; <em class="rfc2119">MAY</em> be mirrored in the subject</td></tr>
 <tr><td>Proof</td><td><code>Ed25519Signature2020</code> over URDNA2015</td><td><code>DataIntegrityProof</code> with <code>eddsa-rdfc-2022</code></td></tr>
@@ -2260,7 +2262,7 @@ See also [robustness](/dimensions/robustness.md) and the
 <pre><code>{
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
-    "https://schema.agtp.org/context/v2"
+    "https://agtp.cc/context/v2.jsonld"
   ],
   "id": "https://solver.example/agtp/capabilities/run-sql.vc.json",
   "type": ["VerifiableCredential", "CapabilityDescriptor"],
@@ -2312,7 +2314,7 @@ See also [robustness](/dimensions/robustness.md) and the
 <h3><bdi class="secno">A.2.</bdi> An Observation Record for an MCP Tool Call<a class="self-link" href="#example-observation" aria-label="Permalink for section A.2">§</a></h3>
 <div class="example" id="example-12"><span class="marker">Example 12<span class="marker-title">: MCPToolCallRecord</span></span>
 <pre><code>{
-  "@context": ["https://schema.agtp.org/context/v2"],
+  "@context": ["https://agtp.cc/context/v2.jsonld"],
   "type": ["ObservationRecord", "MCPToolCallRecord"],
   "id": "urn:uuid:c1a2b3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   "space": "did:web:rlvr.example",
@@ -2342,7 +2344,7 @@ See also [robustness](/dimensions/robustness.md) and the
 <h3><bdi class="secno">A.3.</bdi> A Signed Interaction Receipt<a class="self-link" href="#example-receipt" aria-label="Permalink for section A.3">§</a></h3>
 <div class="example" id="example-13"><span class="marker">Example 13<span class="marker-title">: InteractionReceipt issued by a Space</span></span>
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:7e8f9a0b-1c2d-4e3f-8a9b-0c1d2e3f4a5b",
   "type": ["VerifiableCredential", "InteractionReceipt"],
   "issuer": "did:web:rlvr.example",
@@ -2370,7 +2372,7 @@ See also [robustness](/dimensions/robustness.md) and the
 <h3><bdi class="secno">A.4.</bdi> An Anchor Commitment Referencing an ERC-8004 Validation<a class="self-link" href="#example-anchor" aria-label="Permalink for section A.4">§</a></h3>
 <div class="example" id="example-14"><span class="marker">Example 14<span class="marker-title">: AnchorCommitment</span></span>
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:3f4a5b6c-7d8e-4f9a-8b0c-1d2e3f4a5b6c",
   "type": ["VerifiableCredential", "AnchorCommitment"],
   "issuer": "did:pkh:eip155:1:0x8ba1f109551bD432803012645Ac136ddd64DBA72",
@@ -2431,7 +2433,7 @@ See also [robustness](/dimensions/robustness.md) and the
 <h3><bdi class="secno">A.6.</bdi> A Distilled Persistent Signal with a Commitment<a class="self-link" href="#example-distilled" aria-label="Permalink for section A.6">§</a></h3>
 <div class="example" id="example-16"><span class="marker">Example 16<span class="marker-title">: Persistent summary of ephemeral reasoning checks</span></span>
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5e",
   "type": ["VerifiableCredential", "LearningSignal"],
   "issuer": "did:web:lab.example",
@@ -2538,7 +2540,7 @@ SELECT SUM(amount) FROM `acme.sales.orders`
 WHERE EXTRACT(YEAR FROM recognised_at) = @year
 ```</code></pre>
 <pre><code>{
-  "@context": ["https://www.w3.org/ns/credentials/v2", "https://schema.agtp.org/context/v2"],
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://agtp.cc/context/v2.jsonld"],
   "id": "urn:uuid:5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
   "type": ["VerifiableCredential", "LearningSignal"],
   "issuer": "did:web:attester.example",
@@ -2585,20 +2587,21 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schemas" class="appendix">
 <h2><bdi class="secno">B.</bdi> JSON Schemas<a class="self-link" href="#schemas" aria-label="Permalink for section B">§</a></h2>
-<p>The schemas below are normative constraints on the JSON representation of AGTP objects, using JSON Schema 2020-12 <cite>[<a href="#bib-json-schema">JSON-SCHEMA</a>]</cite>. They deliberately permit additional properties, because AGTP objects are extensible JSON-LD; they check the presence and shape of what this specification requires. The prose of <a href="#core-objects">section 5</a> prevails where the two differ. The schemas are also published at <code>https://schema.agtp.org/json/</code> under the names given in each <code>$id</code>.</p>
+<p>The schemas below are normative constraints on the JSON representation of AGTP objects, using JSON Schema 2020-12 <cite>[<a href="#bib-json-schema">JSON-SCHEMA</a>]</cite>. They deliberately permit additional properties, because AGTP objects are extensible JSON-LD; they check the presence and shape of what this specification requires. The prose of <a href="#core-objects">section 5</a> prevails where the two differ. The schemas are also published at <code>https://agtp.cc/json/</code> under the names given in each <code>$id</code>.</p>
 
 <section id="schema-learning-signal">
 <h3><bdi class="secno">B.1.</bdi> Learning Signal<a class="self-link" href="#schema-learning-signal" aria-label="Permalink for section B.1">§</a></h3>
+<p><a href="https://agtp.cc/json/learning-signal.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/learning-signal.schema.json",
+  "$id": "https://agtp.cc/json/learning-signal.schema.json",
   "title": "AGTP Learning Signal (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "credentialSubject", "credentialStatus", "proof"],
   "anyOf": [ { "required": ["validFrom"] }, { "required": ["issuanceDate"] } ],
   "properties": {
     "@context": { "type": "array", "minItems": 2,
-      "contains": { "const": "https://schema.agtp.org/context/v2" } },
+      "contains": { "const": "https://agtp.cc/context/v2.jsonld" } },
     "id": { "type": "string", "format": "uri" },
     "type": { "type": "array",
       "allOf": [ { "contains": { "const": "VerifiableCredential" } },
@@ -2643,9 +2646,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-space-manifest">
 <h3><bdi class="secno">B.2.</bdi> Space Manifest<a class="self-link" href="#schema-space-manifest" aria-label="Permalink for section B.2">§</a></h3>
+<p><a href="https://agtp.cc/json/space-manifest.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/space-manifest.schema.json",
+  "$id": "https://agtp.cc/json/space-manifest.schema.json",
   "title": "AGTP Space Manifest (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "credentialSubject", "credentialStatus", "proof"],
@@ -2705,9 +2709,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-receipt">
 <h3><bdi class="secno">B.3.</bdi> Receipt<a class="self-link" href="#schema-receipt" aria-label="Permalink for section B.3">§</a></h3>
+<p><a href="https://agtp.cc/json/receipt.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/receipt.schema.json",
+  "$id": "https://agtp.cc/json/receipt.schema.json",
   "title": "AGTP Receipt (2.1)",
   "type": "object",
   "required": ["receiptId", "signalHash", "acceptState", "receivedAt"],
@@ -2731,9 +2736,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-capability-descriptor">
 <h3><bdi class="secno">B.4.</bdi> Capability Descriptor<a class="self-link" href="#schema-capability-descriptor" aria-label="Permalink for section B.4">§</a></h3>
+<p><a href="https://agtp.cc/json/capability-descriptor.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/capability-descriptor.schema.json",
+  "$id": "https://agtp.cc/json/capability-descriptor.schema.json",
   "title": "AGTP Capability Descriptor (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
@@ -2782,9 +2788,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-anchor-commitment">
 <h3><bdi class="secno">B.5.</bdi> Anchor Commitment<a class="self-link" href="#schema-anchor-commitment" aria-label="Permalink for section B.5">§</a></h3>
+<p><a href="https://agtp.cc/json/anchor-commitment.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/anchor-commitment.schema.json",
+  "$id": "https://agtp.cc/json/anchor-commitment.schema.json",
   "title": "AGTP Anchor Commitment (2.1)",
   "type": "object",
   "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
@@ -2816,9 +2823,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-observation-record">
 <h3><bdi class="secno">B.6.</bdi> Observation Record<a class="self-link" href="#schema-observation-record" aria-label="Permalink for section B.6">§</a></h3>
+<p><a href="https://agtp.cc/json/observation-record.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/observation-record.schema.json",
+  "$id": "https://agtp.cc/json/observation-record.schema.json",
   "title": "AGTP Observation Record (2.1)",
   "type": "object",
   "required": ["type", "id", "space", "actor", "sourceProtocol", "sourceRefs", "interaction", "observedAt", "privacyClass"],
@@ -2847,9 +2855,10 @@ Replay-Nonce: Vq8yT2mZ0kR4xL7wN1pC9sHd
 
 <section id="schema-did-service">
 <h3><bdi class="secno">B.7.</bdi> DID Document Service Entries<a class="self-link" href="#schema-did-service" aria-label="Permalink for section B.7">§</a></h3>
+<p><a href="https://agtp.cc/json/did-service.schema.json">Download JSON Schema</a></p>
 <pre><code>{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.agtp.org/json/did-service.schema.json",
+  "$id": "https://agtp.cc/json/did-service.schema.json",
   "title": "AGTP service entries in a DID Document",
   "type": "object",
   "required": ["id", "type", "serviceEndpoint"],
@@ -2896,17 +2905,17 @@ paths:
         required: true
         content:
           application/vc:
-            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+            schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
           application/vc+ld+json:
-            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+            schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
           application/vc+json:
-            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+            schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
       responses:
         "200":
           description: Accepted (or already accepted with the same signalHash)
           headers: { Replay-Nonce: { schema: { type: string } } }
           content:
-            application/json: { schema: { $ref: "https://schema.agtp.org/json/receipt.schema.json" } }
+            application/json: { schema: { $ref: "https://agtp.cc/json/receipt.schema.json" } }
             application/vc: { schema: { type: object, description: InteractionReceipt credential } }
         "202":
           description: Pending validation
@@ -2914,7 +2923,7 @@ paths:
             Retry-After: { schema: { type: integer } }
             Replay-Nonce: { schema: { type: string } }
           content:
-            application/json: { schema: { $ref: "https://schema.agtp.org/json/receipt.schema.json" } }
+            application/json: { schema: { $ref: "https://agtp.cc/json/receipt.schema.json" } }
         "400": { $ref: "#/components/responses/Problem" }
         "401": { $ref: "#/components/responses/Problem" }
         "403": { $ref: "#/components/responses/Problem" }
@@ -2938,7 +2947,7 @@ paths:
             ETag: { required: true, schema: { type: string } }
             Cache-Control: { required: true, schema: { type: string } }
           content:
-            application/vc: { schema: { $ref: "https://schema.agtp.org/json/space-manifest.schema.json" } }
+            application/vc: { schema: { $ref: "https://agtp.cc/json/space-manifest.schema.json" } }
         "304": { description: Not modified }
   /.well-known/agtp/status:
     get:
@@ -3006,7 +3015,7 @@ paths:
                     type: array
                     items:
                       oneOf:
-                        - { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+                        - { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
                         - { type: object, required: [signalHash, url],
                             properties: { signalHash: { type: string }, url: { type: string, format: uri } } }
                   next: { type: string }
@@ -3019,7 +3028,7 @@ paths:
         "200":
           description: The signal
           content:
-            application/vc: { schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" } }
+            application/vc: { schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" } }
         "404": { $ref: "#/components/responses/Problem" }
   /.well-known/agtp/metrics:
     get:
@@ -3056,7 +3065,7 @@ components:
               status: { type: integer }
               detail: { type: string }
               instance: { type: string, format: uri }
-              receipt: { $ref: "https://schema.agtp.org/json/receipt.schema.json" }</code></pre>
+              receipt: { $ref: "https://agtp.cc/json/receipt.schema.json" }</code></pre>
 </section>
 
 <section id="conformance-descriptors" class="appendix">

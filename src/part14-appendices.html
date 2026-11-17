@@ -27,17 +27,17 @@ paths:
         required: true
         content:
           application/vc:
-            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+            schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
           application/vc+ld+json:
-            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+            schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
           application/vc+json:
-            schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+            schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
       responses:
         "200":
           description: Accepted (or already accepted with the same signalHash)
           headers: { Replay-Nonce: { schema: { type: string } } }
           content:
-            application/json: { schema: { $ref: "https://schema.agtp.org/json/receipt.schema.json" } }
+            application/json: { schema: { $ref: "https://agtp.cc/json/receipt.schema.json" } }
             application/vc: { schema: { type: object, description: InteractionReceipt credential } }
         "202":
           description: Pending validation
@@ -45,7 +45,7 @@ paths:
             Retry-After: { schema: { type: integer } }
             Replay-Nonce: { schema: { type: string } }
           content:
-            application/json: { schema: { $ref: "https://schema.agtp.org/json/receipt.schema.json" } }
+            application/json: { schema: { $ref: "https://agtp.cc/json/receipt.schema.json" } }
         "400": { $ref: "#/components/responses/Problem" }
         "401": { $ref: "#/components/responses/Problem" }
         "403": { $ref: "#/components/responses/Problem" }
@@ -69,7 +69,7 @@ paths:
             ETag: { required: true, schema: { type: string } }
             Cache-Control: { required: true, schema: { type: string } }
           content:
-            application/vc: { schema: { $ref: "https://schema.agtp.org/json/space-manifest.schema.json" } }
+            application/vc: { schema: { $ref: "https://agtp.cc/json/space-manifest.schema.json" } }
         "304": { description: Not modified }
   /.well-known/agtp/status:
     get:
@@ -137,7 +137,7 @@ paths:
                     type: array
                     items:
                       oneOf:
-                        - { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" }
+                        - { $ref: "https://agtp.cc/json/learning-signal.schema.json" }
                         - { type: object, required: [signalHash, url],
                             properties: { signalHash: { type: string }, url: { type: string, format: uri } } }
                   next: { type: string }
@@ -150,7 +150,7 @@ paths:
         "200":
           description: The signal
           content:
-            application/vc: { schema: { $ref: "https://schema.agtp.org/json/learning-signal.schema.json" } }
+            application/vc: { schema: { $ref: "https://agtp.cc/json/learning-signal.schema.json" } }
         "404": { $ref: "#/components/responses/Problem" }
   /.well-known/agtp/metrics:
     get:
@@ -187,7 +187,7 @@ components:
               status: { type: integer }
               detail: { type: string }
               instance: { type: string, format: uri }
-              receipt: { $ref: "https://schema.agtp.org/json/receipt.schema.json" }</code></pre>
+              receipt: { $ref: "https://agtp.cc/json/receipt.schema.json" }</code></pre>
 </section>
 
 <section id="conformance-descriptors" class="appendix">

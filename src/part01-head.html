@@ -1,5 +1,5 @@
-<div class="band" aria-hidden="true"><span>AGTP · Editor's Draft · 3 September 2026</span></div>
-<div class="band-mobile" aria-hidden="true">AGTP · Editor's Draft · 3 September 2026</div>
+<div class="band" aria-hidden="true"><span>AGTP · Editor's Draft · 17 November 2026</span></div>
+<div class="band-mobile" aria-hidden="true">AGTP · Editor's Draft · 17 November 2026</div>
 <main>
 <div class="head">
   <a class="logo" href="./" aria-label="AGTP home">
@@ -16,10 +16,10 @@
   </a>
   <h1>Agent Graph Trust Protocol (AGTP) 2.1</h1>
   <p class="subtitle">Identity, provenance and learning signals for the agent graph</p>
-  <h2 id="state">Editor's Draft, 3 September 2026</h2>
+  <h2 id="state">Editor's Draft, 17 November 2026</h2>
   <dl>
     <dt>This version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20260903/">https://agtp.cc/2026/ED-agtp-2.1-20260903/</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117/">https://agtp.cc/2026/ED-agtp-2.1-20261117/</a></dd>
     <dt>Latest published version:</dt>
     <dd><a href="https://agtp.cc/">https://agtp.cc/</a></dd>
     <dt>Latest editor's draft:</dt>
@@ -27,13 +27,13 @@
     <dt>Protocol repository:</dt>
     <dd><a href="https://github.com/new-foundation/agtp">https://github.com/new-foundation/agtp</a></dd>
     <dt>Previous version:</dt>
-    <dd>AGTP v2 specification text (repository README, 24 February 2026)</dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20260903/">AGTP 2.1 Editor’s Draft, 3 September 2026</a></dd>
     <dt>Editors:</dt>
     <dd>The AGTP Consortium, convened by <a href="https://newcoin.org/">Newfoundation</a></dd>
     <dt>Feedback:</dt>
     <dd><a href="https://github.com/vectoshi/agtp.cc/issues">GitHub issues</a> &middot; <a href="mailto:contact@newcoin.org">contact@newcoin.org</a></dd>
     <dt>Errata:</dt>
-    <dd>No errata have been recorded for this draft.</dd>
+    <dd>This revision publishes the previously missing machine-readable context and schema resources; see the publication notes below.</dd>
     <dt>Companion pages:</dt>
     <dd><a href="https://newcoin.org/">newcoin.org</a> &middot; <a href="https://newcoin.org/Open_Learning">Newcoin: Open Learning</a> &middot; <a href="https://newcoin.org/Core_Concepts">Newcoin: Core Concepts</a></dd>
   </dl>
@@ -53,6 +53,7 @@
 <p>This document is an Editor's Draft of AGTP 2.1 prepared for the AGTP Consortium and published by Newfoundation. It consolidates the AGTP v2 specification text, the binding profiles developed during the 2026 convergence work and new profiles for Agentic Resource Discovery and the Open Knowledge Format into a single document laid out as a standards-track specification. It is not yet a Consortium Recommendation; it is published to gather implementation experience and review.</p>
 <p>This document is not a product of the World Wide Web Consortium, the Internet Engineering Task Force, the Agentic AI Foundation, the A2A project, the ARD project or Google Cloud. It references specifications maintained by those bodies and does not modify them. Where a referenced specification changes, that specification prevails and this document will be updated through the change process in <a href="#versioning">section 13</a>.</p>
 <p>Changes relative to AGTP v2 are listed in <a href="#changes">Appendix G</a>. The most consequential are the alignment with Verifiable Credentials 2.0 and the Data Integrity cryptosuites, the introduction of the credential family (<a href="#credential-family">section 4.2</a>), the discovery profile (<a href="#discovery">section 7</a>) and the knowledge profile (<a href="#knowledge">section 8</a>). Producers and consumers of AGTP v2 objects remain conformant during the overlap window described in <a href="#versioning">section 13</a>.</p>
+<p id="artifact-publication">This revision newly authors the protected <a href="https://agtp.cc/context/v2.jsonld">AGTP v2 context</a> and publishes the Appendix B <a href="https://agtp.cc/json/learning-signal.schema.json">JSON Schema resources</a> on this specification’s existing publication origin. These context bytes were not recovered from the former schema.agtp.org endpoint. The 3 September draft remains unchanged. Vocabulary IRIs under <code>https://schema.agtp.org/ontology#</code> remain stable identifiers. New credentials MUST use <code>https://agtp.cc/context/v2.jsonld</code>; consumers of historical credentials MUST pin the exact context artifact they used and MUST NOT reinterpret existing proofs with newly authored mappings. See <a href="https://agtp.cc/context/README.md">context publication and migration notes</a> for mappings, limitations and artifact digests.</p>
 <p>Comments are welcome through the issue tracker of the specification repository or by email to the editors. Implementers are asked to report which conformance classes they claim (<a href="#conformance">section 1.5</a>) so that the conformance suite in <a href="#conformance-descriptors">Appendix D</a> can be extended from real deployments.</p>
 </section>
 

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agtp.cc/json/anchor-commitment.schema.json",
+  "title": "AGTP Anchor Commitment (2.1)",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
+  "properties": {
+    "type": { "type": "array", "contains": { "enum": ["AnchorCommitment", "AnchorCommitmentCredential"] } },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["id", "root", "tree", "hashAlgorithm", "covered", "count", "reference", "anchoredAt"],
+      "properties": {
+        "id": { "type": "string", "format": "uri" },
+        "root": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+        "tree": { "type": "string" },
+        "hashAlgorithm": { "type": "string" },
+        "covered": { "oneOf": [
+          { "type": "array", "items": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" } },
+          { "type": "object", "required": ["uri", "cid"] } ] },
+        "count": { "type": "integer", "minimum": 1 },
+        "space": { "type": "string", "pattern": "^did:" },
+        "chain": { "type": "string", "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$" },
+        "reference": { "type": "object" },
+        "anchoredAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

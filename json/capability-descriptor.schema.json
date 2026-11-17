@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agtp.cc/json/capability-descriptor.schema.json",
+  "title": "AGTP Capability Descriptor (2.1)",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "validFrom", "credentialSubject", "proof"],
+  "properties": {
+    "type": { "type": "array", "contains": { "enum": ["CapabilityDescriptor", "CapabilityDescriptorCredential"] } },
+    "issuer": { "type": "string", "pattern": "^did:" },
+    "credentialSubject": {
+      "type": "object",
+      "required": ["id", "owner", "name", "interfaceType", "contentHash"],
+      "properties": {
+        "id": { "type": "string", "format": "uri" },
+        "owner": { "type": "string", "pattern": "^did:" },
+        "name": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string" },
+        "interfaceType": { "type": "string",
+          "anyOf": [ { "enum": ["mcp-tool", "mcp-resource", "mcp-prompt", "a2a-skill", "api-tool",
+                                "agent-skill", "okf-computation", "policy-only"] },
+                     { "pattern": "^x-[a-z0-9-]+$" } ] },
+        "interface": { "type": "object", "properties": {
+          "protocol": { "type": "string" }, "version": { "type": "string" },
+          "schemaHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+          "bindings": { "type": "array", "items": { "type": "object", "required": ["protocol"] } } } },
+        "inputSchema": { "oneOf": [ { "type": "object" }, { "type": "string", "format": "uri" } ] },
+        "outputSchema": { "oneOf": [ { "type": "object" }, { "type": "string", "format": "uri" } ] },
+        "constraints": { "type": "object" },
+        "sourceArtifacts": { "type": "array", "items": { "$ref": "#/$defs/artifactRef" } },
+        "version": { "type": "string" },
+        "contentHash": { "type": "string", "pattern": "^u[A-Za-z0-9_-]+$" },
+        "discovery": { "type": "object" },
+        "spaces": { "type": "array", "items": { "type": "string", "pattern": "^did:" } }
+      },
+      "if": { "properties": { "interfaceType": { "const": "policy-only" } } },
+      "else": { "required": ["interface"] },
+      "additionalProperties": true
+    },
+    "proof": { "type": "object" }
+  },
+  "$defs": {
+    "artifactRef": { "type": "object", "required": ["cid"],
+      "properties": { "cid": { "type": "string" }, "uri": { "type": "string", "format": "uri" },
+                      "role": { "type": "string" }, "mediaType": { "type": "string" } } }
+  },
+  "additionalProperties": true
+}

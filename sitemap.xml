@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://agtp.cc/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-11-17</lastmod>
         <changefreq>monthly</changefreq>
         <priority>1.0</priority>
     </url>
@@ -12,4 +12,5 @@
         <changefreq>never</changefreq>
         <priority>0.5</priority>
     </url>
+    <url><loc>https://agtp.cc/2026/ED-agtp-2.1-20261117/</loc><lastmod>2026-11-17</lastmod><changefreq>never</changefreq></url>
 </urlset>
