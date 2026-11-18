@@ -96,3 +96,19 @@ The three earlier snapshots stay byte-identical. Tests use the existing
 independent PyLD/c14n and Node JSON-LD/JCS engines, with synthetic descriptors
 and signatures. They qualify schema-byte, RDF and proof preservation; they do
 not establish public DID resolution, status, admission or deployed availability.
+
+
+## November 18 binding revision 2
+
+The new `2026/ED-agtp-2.1-20261118-binding2/` snapshot newly registers the actual
+MCP 2025-03-26 profile. This is a normative binding addition, not an editorial
+change to earlier text or an upgrade of any upstream transport. All four older
+snapshots, the context and core JSON schemas remain byte-identical. March-standard
+methods/content are distinguished from later outputSchema/structuredContent,
+resource-link, elicitation and Tasks extensions. Exact official schema/prose
+source pins and the actual upstream MIT license accompany the qualification
+fixtures; no new license grant is attributed to the AGTP specification.
+
+```sh
+python3 src/build.py --snapshot 2026/ED-agtp-2.1-20261118-binding2
+```

@@ -16,6 +16,18 @@ def loader(url,options=None):
  return {'contextUrl':None,'documentUrl':url,'document':json.loads((root/contexts[url]).read_text())}
 request=json.load(sys.stdin)
 def canon(doc):return jsonld.normalize(doc,{'algorithm':'URDNA2015','format':'application/n-quads','documentLoader':loader})
+if request.get('mode') == 'mcp-march':
+ from jsonschema import Draft7Validator
+ official=json.loads((root/'test-fixtures/mcp-2025-03-26/schema.json').read_text())
+ kind=request['kind']
+ if kind not in {'Tool','CallToolRequest','CallToolResult','InitializeResult'}:raise ValueError('Unsupported March qualification kind')
+ schema={'$schema':'http://json-schema.org/draft-07/schema#','$ref':'#/definitions/'+kind,'definitions':official['definitions']}
+ Draft7Validator.check_schema(schema)
+ Draft7Validator(schema).validate(request['document'])
+ known=set(official['definitions'][kind].get('properties',{}))
+ extensions=sorted(key for key in request['document'] if key not in known)
+ print(json.dumps({'standard_core_valid':True,'extension_fields':extensions,'revision':'2025-03-26'}))
+ sys.exit(0)
 if request.get('mode') == 'schema-payload':
  # Isolated RFC8785 schema metadata path. Existing credential/money/evidence
  # parsing below remains unchanged. JCS numbers have IEEE754 semantics.

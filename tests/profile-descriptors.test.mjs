@@ -16,6 +16,7 @@ const payload=encodeSchemaPayload(pair),hash=schemaHash(payload),schemaPayload={
 const definitions=[
  {name:'native-source-example',type:'api-tool',binding:{protocol:'gos-atom',version:'1.0.0',atom_id:'atom.compute.synthetic-profile-example',entry:'compute.synthetic-profile-example',carrier:'compute'}},
  {name:'https-source-example',type:'api-tool',binding:{protocol:'https',version:'synthetic-api.v1',url:'https://example.test/v1/profile-example',method:'POST',correlation:{responseUri:'/interaction_uri'}}},
+ {name:'mcp-march-source-example',type:'mcp-tool',binding:{protocol:'mcp',version:'2025-03-26',profile:'mcp/2025-03-26',server:'https://example.test/v1/registry/mcp',tool:'synthetic_march_tool'}},
  {name:'mcp-source-example',type:'mcp-tool',binding:{protocol:'mcp',version:'2025-06-18',server:'https://example.test/v1/registry/mcp',tool:'synthetic_profile_example'}}
 ];
 for(const item of definitions)test('complete '+item.name+' schema/proof fields remain independently hash-bound',async()=>{
@@ -46,4 +47,8 @@ test('new profiles are registered and explicitly separate source, observation, i
 
 test('previous editorial snapshot is immutable alongside earlier frozen versions',()=>{
  assert.equal(sha(fs.readFileSync('2026/ED-agtp-2.1-20261117-editorial1/index.html')).toString('hex'),'fbda15ecfa7e63ea004e16f1af19dd13c2ba7b1e8b122f3284156368633c1680');
+});
+
+test('the previously published November18 binding snapshot is immutable',()=>{
+ assert.equal(sha(fs.readFileSync('2026/ED-agtp-2.1-20261118/index.html')).toString('hex'),'4dcd5fcbc288d2a780153c3b5bd35ede04e30617899f5ca221d63f8dc36907f1');
 });
