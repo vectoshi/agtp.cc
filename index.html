@@ -241,10 +241,10 @@ dl.bib dd { margin: .1rem 0 0 0; }
   </a>
   <h1>Agent Graph Trust Protocol (AGTP) 2.1</h1>
   <p class="subtitle">Identity, provenance and learning signals for the agent graph</p>
-  <h2 id="state">Editor's Draft, 18 November 2026</h2>
+  <h2 id="state">Editor's Draft, 18 November 2026 — binding revision 2</h2>
   <dl>
     <dt>This version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261118/">https://agtp.cc/2026/ED-agtp-2.1-20261118/</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261118-binding2/">https://agtp.cc/2026/ED-agtp-2.1-20261118-binding2/</a></dd>
     <dt>Latest published version:</dt>
     <dd><a href="https://agtp.cc/">https://agtp.cc/</a></dd>
     <dt>Latest editor's draft:</dt>
@@ -252,13 +252,13 @@ dl.bib dd { margin: .1rem 0 0 0; }
     <dt>Protocol repository:</dt>
     <dd><a href="https://github.com/new-foundation/agtp">https://github.com/new-foundation/agtp</a></dd>
     <dt>Previous version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117-editorial1/">AGTP 2.1 Editor’s Draft, 17 November 2026, editorial revision 1</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261118/">AGTP 2.1 Editor’s Draft, 18 November 2026</a></dd>
     <dt>Editors:</dt>
     <dd>The AGTP Consortium, convened by <a href="https://newcoin.org/">Newfoundation</a></dd>
     <dt>Feedback:</dt>
     <dd><a href="https://github.com/vectoshi/agtp.cc/issues">GitHub issues</a> &middot; <a href="mailto:contact@newcoin.org">contact@newcoin.org</a></dd>
-    <dt>Errata:</dt>
-    <dd>This revision adds the newly authored gOS atom binding and isolated schema-payload encoding. All three previously published snapshots and the existing core context/JSON Schema bytes remain unchanged; no historical proof or schemaHash is reinterpreted.</dd>
+    <dt>Binding revision:</dt>
+    <dd>This normative binding revision newly registers the actual MCP 2025-03-26 mapping, preserving its revision-defined fields and distinguishing later server extensions. All four previously published snapshots and the core context/JSON Schema bytes remain unchanged. This is a new profile publication, not an editorial reinterpretation or transport upgrade.</dd>
     <dt>Companion pages:</dt>
     <dd><a href="https://newcoin.org/">newcoin.org</a> &middot; <a href="https://newcoin.org/Open_Learning">Newcoin: Open Learning</a> &middot; <a href="https://newcoin.org/Core_Concepts">Newcoin: Core Concepts</a></dd>
   </dl>
@@ -431,6 +431,9 @@ dl.bib dd { margin: .1rem 0 0 0; }
 <li><a href="#profile-did-vc"><bdi class="secno">12.2.</bdi> DID and Verifiable Credentials (Baseline)</a>
 </li>
 <li><a href="#profile-mcp"><bdi class="secno">12.3.</bdi> Model Context Protocol</a>
+<ol class="toc">
+<li><a href="#profile-mcp-march"><bdi class="secno">12.3.1.</bdi> March 2025 revision boundary</a>
+</li></ol>
 </li>
 <li><a href="#profile-ard"><bdi class="secno">12.4.</bdi> Agentic Resource Discovery</a>
 </li>
@@ -1975,7 +1978,7 @@ See also [robustness](/dimensions/robustness.md) and the
 
 <section id="profile-mcp">
 <h3><bdi class="secno">12.3.</bdi> Model Context Protocol<a class="self-link" href="#profile-mcp" aria-label="Permalink for section 12.3">§</a></h3>
-<p>Profile identifiers: <code>mcp/2025-11-25</code> and <code>mcp/2025-06-18</code>, corresponding to the MCP specification revisions <cite>[<a href="#bib-mcp">MCP</a>]</cite>. MCP defines how a client discovers and invokes a server's tools, resources and prompts over JSON-RPC 2.0; it says nothing about whether the results were any good. This profile makes MCP activity first-class evidence in AGTP without changing MCP semantics.</p>
+<p>Profile identifiers: <code>mcp/2025-11-25</code>, <code>mcp/2025-06-18</code> and <code>mcp/2025-03-26</code>, corresponding to the MCP specification revisions <cite>[<a href="#bib-mcp">MCP</a>]</cite>. MCP defines how a client discovers and invokes a server's tools, resources and prompts over JSON-RPC 2.0; it says nothing about whether the results were any good. This profile makes MCP activity first-class evidence in AGTP without changing MCP semantics.</p>
 <div class="table-wrap">
 <table>
 <caption>MCP to AGTP mapping</caption>
@@ -1994,6 +1997,17 @@ See also [robustness](/dimensions/robustness.md) and the
 </tbody>
 </table>
 </div>
+<section id="profile-mcp-march">
+<h4><bdi class="secno">12.3.1.</bdi> March 2025 revision boundary<a class="self-link" href="#profile-mcp-march" aria-label="Permalink for section 12.3.1">§</a></h4>
+<p>Profile <code>mcp/2025-03-26</code> is newly registered by this binding revision. It maps the actual <a href="https://modelcontextprotocol.io/specification/2025-03-26">26 March 2025 specification</a>, pinned for qualification at official source commit <code>9236eb1cbfa02c17ab45c83a7bdbe55c450070be</code>. The exact schema, tool/lifecycle prose and upstream license are retained with digests in <a href="https://agtp.cc/test-fixtures/mcp-2025-03-26/provenance.json">the qualification provenance</a>. This registration does not upgrade a server transport or reinterpret any earlier descriptor or proof.</p>
+<ul>
+<li>The Capability Descriptor <em class="rfc2119">MUST</em> retain the actual <code>interface.protocol: mcp</code>, <code>version: 2025-03-26</code>, <code>server</code> URL or DID, and actual <code>tool</code>, resource URI or prompt name. Primary and declared <code>bindings</code> <em class="rfc2119">MUST</em> retain those same locators and the applicable <code>schemaHash</code>. A legacy <code>url</code> field does not replace the required <code>server</code>. The shared <a href="#profile-gos-schema-payload">schema-payload convention</a> <em class="rfc2119">MAY</em> bind the exact materialized schema objects; it does not claim that an optional later schema field is March-standard.</li>
+<li>The March Tool definition has <code>name</code>, optional <code>description</code>, required object <code>inputSchema</code> and optional <code>annotations</code>. Its annotation title and read-only/destructive/idempotent/open-world hints are preserved as untrusted hints. The March CallToolResult has <code>content</code> (text, image, audio or embedded-resource blocks) and optional <code>isError</code>. Block order, raw data, media types and references <em class="rfc2119">MUST</em> be retained; each mapped content artifact binds the actual block bytes under the selected privacy policy.</li>
+<li>March does not define <code>outputSchema</code>, <code>structuredContent</code>, resource-link content blocks, elicitation or Tasks. A producer <em class="rfc2119">MUST NOT</em> advertise these as March-standard or synthesize them from other fields. If a server actually emits a later-only field or another extension, the observer <em class="rfc2119">MUST</em> preserve its original bytes and ordering as extension evidence in Artifacts and <code>sourceRefs</code>, with the actual extension provenance and qualification stated separately. An unrecognized extension <em class="rfc2119">MUST NOT</em> silently become a revision-standard claim. This does not turn open extension points into closed wire objects.</li>
+<li>Only methods and capabilities defined by the actual March revision participate as March-standard: lifecycle/initialization; tools, resources, resource templates and prompts; sampling and roots; logging, completion, pagination, progress, cancellation and ping. A server need only expose its declared supported capabilities. Sampling is not elicitation; no Tasks lifecycle or interaction ID is invented. Later rows in the common table apply only where the actual negotiated revision defines them.</li>
+<li>The common mapping retains JSON-RPC request IDs with their original string/number type, actual method/tool/server identifiers, event ordering, outcomes and privacy-controlled request/result artifacts. Established server or gateway DIDs identify the actor; the original capability/subject remains distinct from an invocation. An actual <code>_meta["org.agtp/interaction"]</code> is preserved; otherwise interaction derivation follows <a href="#interaction-identifiers">§3.3</a>. Metadata/context is carried only through the revision's existing extension points. Successful transport, content or an annotation does not create a Learning Signal, Rating, grant or verified source claim.</li>
+</ul>
+</section>
 <p>The following requirements apply:</p>
 <ol>
 <li>Clients that participate in AGTP <em class="rfc2119">SHOULD</em> send <code>_meta["org.agtp/space"]</code>, <code>_meta["org.agtp/interaction"]</code> and <code>_meta["org.agtp/actor"]</code> on <code>tools/call</code> and <code>resources/read</code> requests so that the server can attach its records to the same interaction. Servers <em class="rfc2119">MUST</em> ignore these keys when they do not understand them, as MCP requires of unknown <code>_meta</code> keys.</li>
@@ -3282,7 +3296,7 @@ components:
 <tr><td>Record types</td><td><code>ObservationRecord</code>, <code>MCPToolCallRecord</code>, <code>A2ATaskEventRecord</code>, <code>ModelRunRecord</code>, <code>UIEventRecord</code></td></tr>
 <tr><td>DID service types</td><td><code>AGTPFeedbackService</code>, <code>AGTPSpaceManifest</code>, <code>AGTPCapabilities</code>, <code>AGTPSignalIndex</code>, <code>AgenticResourceDiscovery</code>, <code>MCPServer</code>, <code>A2AAgentCard</code></td></tr>
 <tr><td>Credential status types</td><td><code>AGTPSpaceStatus</code></td></tr>
-<tr><td>Profile identifiers</td><td><code>did-vc/2.1</code>, <code>http/1.0</code>, <code>http/1.1</code>, <code>didcomm/2.0</code>, <code>mcp/2025-06-18</code>, <code>mcp/2025-11-25</code>, <code>ard/0.91</code>, <code>okf/0.2</code>, <code>openai-api/1</code>, <code>a2a/1.0</code>, <code>a2ui/0.8</code>, <code>a2ui/0.9</code>, <code>agents-skills/1</code>, <code>gos-atom/1</code>, <code>https-api/1</code>, <code>erc8004/1</code></td></tr>
+<tr><td>Profile identifiers</td><td><code>did-vc/2.1</code>, <code>http/1.0</code>, <code>http/1.1</code>, <code>didcomm/2.0</code>, <code>mcp/2025-03-26</code>, <code>mcp/2025-06-18</code>, <code>mcp/2025-11-25</code>, <code>ard/0.91</code>, <code>okf/0.2</code>, <code>openai-api/1</code>, <code>a2a/1.0</code>, <code>a2ui/0.8</code>, <code>a2ui/0.9</code>, <code>agents-skills/1</code>, <code>gos-atom/1</code>, <code>https-api/1</code>, <code>erc8004/1</code></td></tr>
 <tr><td>Interface types</td><td><code>mcp-tool</code>, <code>mcp-resource</code>, <code>mcp-prompt</code>, <code>a2a-skill</code>, <code>api-tool</code>, <code>agent-skill</code>, <code>okf-computation</code>, <code>policy-only</code>; extensions prefixed <code>x-</code></td></tr>
 <tr><td>Privacy classes</td><td><code>ephemeral</code>, <code>persistent</code>, <code>redacted</code>, <code>committed-only</code></td></tr>
 <tr><td>Aggregation functions</td><td><code>https://schema.agtp.org/aggregation#TrustWeightedAverage</code></td></tr>

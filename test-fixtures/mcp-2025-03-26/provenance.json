@@ -1,0 +1,38 @@
+{
+  "source_repository": "https://github.com/modelcontextprotocol/specification",
+  "source_commit": "9236eb1cbfa02c17ab45c83a7bdbe55c450070be",
+  "revision": "2025-03-26",
+  "purpose": "Exact official revision artifacts for binding qualification; no later-method conformance inferred",
+  "files": {
+    "schema.json": {
+      "source_path": "schema/2025-03-26/schema.json",
+      "source_url": "https://raw.githubusercontent.com/modelcontextprotocol/specification/9236eb1cbfa02c17ab45c83a7bdbe55c450070be/schema/2025-03-26/schema.json",
+      "sha256": "dd1619bf96fcd8c50fe46f0dd05b4b9bb9356010040ae985fa595fee226ff4ed",
+      "bytes": 88896
+    },
+    "schema.ts": {
+      "source_path": "schema/2025-03-26/schema.ts",
+      "source_url": "https://raw.githubusercontent.com/modelcontextprotocol/specification/9236eb1cbfa02c17ab45c83a7bdbe55c450070be/schema/2025-03-26/schema.ts",
+      "sha256": "d76b5f653af272c2d58681c68bde24cece1bea7216debedeb108b60a0116d6cc",
+      "bytes": 33968
+    },
+    "tools.md": {
+      "source_path": "docs/specification/2025-03-26/server/tools.md",
+      "source_url": "https://raw.githubusercontent.com/modelcontextprotocol/specification/9236eb1cbfa02c17ab45c83a7bdbe55c450070be/docs/specification/2025-03-26/server/tools.md",
+      "sha256": "5bd557cd0eb1db3de1f16cab1587d004ff98d0a2ad0f4aa75b94ed5485294822",
+      "bytes": 6223
+    },
+    "lifecycle.md": {
+      "source_path": "docs/specification/2025-03-26/basic/lifecycle.md",
+      "source_url": "https://raw.githubusercontent.com/modelcontextprotocol/specification/9236eb1cbfa02c17ab45c83a7bdbe55c450070be/docs/specification/2025-03-26/basic/lifecycle.md",
+      "sha256": "fd66fe4062a5179dffa8622d4695a0c3037d703115c645fca3a91c6d9f816bde",
+      "bytes": 7595
+    },
+    "LICENSE": {
+      "source_path": "LICENSE",
+      "source_url": "https://raw.githubusercontent.com/modelcontextprotocol/specification/9236eb1cbfa02c17ab45c83a7bdbe55c450070be/LICENSE",
+      "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+      "bytes": 1071
+    }
+  }
+}

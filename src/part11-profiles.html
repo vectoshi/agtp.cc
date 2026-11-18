@@ -46,7 +46,7 @@
 
 <section id="profile-mcp">
 <h3>Model Context Protocol</h3>
-<p>Profile identifiers: <code>mcp/2025-11-25</code> and <code>mcp/2025-06-18</code>, corresponding to the MCP specification revisions <cite>[<a href="#bib-mcp">MCP</a>]</cite>. MCP defines how a client discovers and invokes a server's tools, resources and prompts over JSON-RPC 2.0; it says nothing about whether the results were any good. This profile makes MCP activity first-class evidence in AGTP without changing MCP semantics.</p>
+<p>Profile identifiers: <code>mcp/2025-11-25</code>, <code>mcp/2025-06-18</code> and <code>mcp/2025-03-26</code>, corresponding to the MCP specification revisions <cite>[<a href="#bib-mcp">MCP</a>]</cite>. MCP defines how a client discovers and invokes a server's tools, resources and prompts over JSON-RPC 2.0; it says nothing about whether the results were any good. This profile makes MCP activity first-class evidence in AGTP without changing MCP semantics.</p>
 <div class="table-wrap">
 <table>
 <caption>MCP to AGTP mapping</caption>
@@ -65,6 +65,17 @@
 </tbody>
 </table>
 </div>
+<section id="profile-mcp-march">
+<h4>March 2025 revision boundary</h4>
+<p>Profile <code>mcp/2025-03-26</code> is newly registered by this binding revision. It maps the actual <a href="https://modelcontextprotocol.io/specification/2025-03-26">26 March 2025 specification</a>, pinned for qualification at official source commit <code>9236eb1cbfa02c17ab45c83a7bdbe55c450070be</code>. The exact schema, tool/lifecycle prose and upstream license are retained with digests in <a href="https://agtp.cc/test-fixtures/mcp-2025-03-26/provenance.json">the qualification provenance</a>. This registration does not upgrade a server transport or reinterpret any earlier descriptor or proof.</p>
+<ul>
+<li>The Capability Descriptor MUST retain the actual <code>interface.protocol: mcp</code>, <code>version: 2025-03-26</code>, <code>server</code> URL or DID, and actual <code>tool</code>, resource URI or prompt name. Primary and declared <code>bindings</code> MUST retain those same locators and the applicable <code>schemaHash</code>. A legacy <code>url</code> field does not replace the required <code>server</code>. The shared <a href="#profile-gos-schema-payload">schema-payload convention</a> MAY bind the exact materialized schema objects; it does not claim that an optional later schema field is March-standard.</li>
+<li>The March Tool definition has <code>name</code>, optional <code>description</code>, required object <code>inputSchema</code> and optional <code>annotations</code>. Its annotation title and read-only/destructive/idempotent/open-world hints are preserved as untrusted hints. The March CallToolResult has <code>content</code> (text, image, audio or embedded-resource blocks) and optional <code>isError</code>. Block order, raw data, media types and references MUST be retained; each mapped content artifact binds the actual block bytes under the selected privacy policy.</li>
+<li>March does not define <code>outputSchema</code>, <code>structuredContent</code>, resource-link content blocks, elicitation or Tasks. A producer MUST NOT advertise these as March-standard or synthesize them from other fields. If a server actually emits a later-only field or another extension, the observer MUST preserve its original bytes and ordering as extension evidence in Artifacts and <code>sourceRefs</code>, with the actual extension provenance and qualification stated separately. An unrecognized extension MUST NOT silently become a revision-standard claim. This does not turn open extension points into closed wire objects.</li>
+<li>Only methods and capabilities defined by the actual March revision participate as March-standard: lifecycle/initialization; tools, resources, resource templates and prompts; sampling and roots; logging, completion, pagination, progress, cancellation and ping. A server need only expose its declared supported capabilities. Sampling is not elicitation; no Tasks lifecycle or interaction ID is invented. Later rows in the common table apply only where the actual negotiated revision defines them.</li>
+<li>The common mapping retains JSON-RPC request IDs with their original string/number type, actual method/tool/server identifiers, event ordering, outcomes and privacy-controlled request/result artifacts. Established server or gateway DIDs identify the actor; the original capability/subject remains distinct from an invocation. An actual <code>_meta["org.agtp/interaction"]</code> is preserved; otherwise interaction derivation follows <a href="#interaction-identifiers">§3.3</a>. Metadata/context is carried only through the revision's existing extension points. Successful transport, content or an annotation does not create a Learning Signal, Rating, grant or verified source claim.</li>
+</ul>
+</section>
 <p>The following requirements apply:</p>
 <ol>
 <li>Clients that participate in AGTP SHOULD send <code>_meta["org.agtp/space"]</code>, <code>_meta["org.agtp/interaction"]</code> and <code>_meta["org.agtp/actor"]</code> on <code>tools/call</code> and <code>resources/read</code> requests so that the server can attach its records to the same interaction. Servers MUST ignore these keys when they do not understand them, as MCP requires of unknown <code>_meta</code> keys.</li>
