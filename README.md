@@ -41,7 +41,7 @@ the head matter in `src/part01-head.html`, and add the new URL to `sitemap.xml`.
 
 ## Status
 
-Editor's Draft, 17 November 2026, published by Newfoundation. This document is not a
+Editor's Draft, 18 November 2026, published by Newfoundation. This document is not a
 product of the W3C, the IETF, or the ARD, OKF, MCP or A2A projects; it references their
 specifications and does not modify them.
 
@@ -77,3 +77,22 @@ without inventing a signal hash. Both previously published dated snapshots remai
 immutable. Normative requirement text and every context/schema byte are unchanged.
 The examples in `test-fixtures/http-envelope.json` are synthetic transport vectors;
 they do not establish an implementation's conformance or reinterpret old proofs.
+
+## New binding publication
+
+The November18 revision adds `gos-atom/1` for the actual Registry/Compute/Work
+API, `https-api/1` for existing typed HTTPS operations, and the isolated
+`jcs-schema-payload/1` encoding. It does not create an invocation service,
+reinterpret an old proof/schema hash, or change the protected core context and
+seven AppendixB schema files. Registry source declarations and current runtime
+admission remain separate. A source-only Activity module has no qualified
+Registry invocation until its real carrier/wrapper is accepted.
+
+```sh
+python3 src/build.py --snapshot 2026/ED-agtp-2.1-20261118
+```
+
+The three earlier snapshots stay byte-identical. Tests use the existing
+independent PyLD/c14n and Node JSON-LD/JCS engines, with synthetic descriptors
+and signatures. They qualify schema-byte, RDF and proof preservation; they do
+not establish public DID resolution, status, admission or deployed availability.

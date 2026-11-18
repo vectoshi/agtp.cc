@@ -223,8 +223,8 @@ dl.bib dd { margin: .1rem 0 0 0; }
 </style>
 </head>
 <body>
-<div class="band" aria-hidden="true"><span>AGTP · Editor's Draft · 17 November 2026</span></div>
-<div class="band-mobile" aria-hidden="true">AGTP · Editor's Draft · 17 November 2026</div>
+<div class="band" aria-hidden="true"><span>AGTP · Editor's Draft · 18 November 2026</span></div>
+<div class="band-mobile" aria-hidden="true">AGTP · Editor's Draft · 18 November 2026</div>
 <main>
 <div class="head">
   <a class="logo" href="./" aria-label="AGTP home">
@@ -241,10 +241,10 @@ dl.bib dd { margin: .1rem 0 0 0; }
   </a>
   <h1>Agent Graph Trust Protocol (AGTP) 2.1</h1>
   <p class="subtitle">Identity, provenance and learning signals for the agent graph</p>
-  <h2 id="state">Editor's Draft, 17 November 2026, editorial revision 1</h2>
+  <h2 id="state">Editor's Draft, 18 November 2026</h2>
   <dl>
     <dt>This version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117-editorial1/">https://agtp.cc/2026/ED-agtp-2.1-20261117-editorial1/</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261118/">https://agtp.cc/2026/ED-agtp-2.1-20261118/</a></dd>
     <dt>Latest published version:</dt>
     <dd><a href="https://agtp.cc/">https://agtp.cc/</a></dd>
     <dt>Latest editor's draft:</dt>
@@ -252,13 +252,13 @@ dl.bib dd { margin: .1rem 0 0 0; }
     <dt>Protocol repository:</dt>
     <dd><a href="https://github.com/new-foundation/agtp">https://github.com/new-foundation/agtp</a></dd>
     <dt>Previous version:</dt>
-    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117/">AGTP 2.1 Editor’s Draft, 17 November 2026</a></dd>
+    <dd><a href="https://agtp.cc/2026/ED-agtp-2.1-20261117-editorial1/">AGTP 2.1 Editor’s Draft, 17 November 2026, editorial revision 1</a></dd>
     <dt>Editors:</dt>
     <dd>The AGTP Consortium, convened by <a href="https://newcoin.org/">Newfoundation</a></dd>
     <dt>Feedback:</dt>
     <dd><a href="https://github.com/vectoshi/agtp.cc/issues">GitHub issues</a> &middot; <a href="mailto:contact@newcoin.org">contact@newcoin.org</a></dd>
     <dt>Errata:</dt>
-    <dd>This editorial revision explains pre-canonicalisation HTTP errors and duplicate responses; normative requirement text, schema and context bytes are unchanged. See the envelope-failure note in section 9.2.</dd>
+    <dd>This revision adds the newly authored gOS atom binding and isolated schema-payload encoding. All three previously published snapshots and the existing core context/JSON Schema bytes remain unchanged; no historical proof or schemaHash is reinterpreted.</dd>
     <dt>Companion pages:</dt>
     <dd><a href="https://newcoin.org/">newcoin.org</a> &middot; <a href="https://newcoin.org/Open_Learning">Newcoin: Open Learning</a> &middot; <a href="https://newcoin.org/Core_Concepts">Newcoin: Core Concepts</a></dd>
   </dl>
@@ -444,7 +444,16 @@ dl.bib dd { margin: .1rem 0 0 0; }
 </li>
 <li><a href="#profile-agents-skills"><bdi class="secno">12.9.</bdi> AGENTS.md and Agent Skills</a>
 </li>
-<li><a href="#profile-erc8004"><bdi class="secno">12.10.</bdi> ERC-8004 Trustless Agents</a>
+<li><a href="#profile-https-api"><bdi class="secno">12.10.</bdi> Typed HTTPS API Operations</a>
+</li>
+<li><a href="#profile-gos-atom"><bdi class="secno">12.11.</bdi> gOS Atom Declarations and Retained Execution</a>
+<ol class="toc">
+<li><a href="#profile-gos-schema-payload"><bdi class="secno">12.11.1.</bdi> Exact Schema Payload Bytes</a>
+</li>
+<li><a href="#profile-gos-observations"><bdi class="secno">12.11.2.</bdi> Identity, Provenance and Issuance</a>
+</li></ol>
+</li>
+<li><a href="#profile-erc8004"><bdi class="secno">12.12.</bdi> ERC-8004 Trustless Agents</a>
 </li></ol>
 </li>
 <li><a href="#versioning"><bdi class="secno">13.</bdi> Versioning, Extensibility and Governance</a>
@@ -2102,8 +2111,59 @@ See also [robustness](/dimensions/robustness.md) and the
 <p>OKF attested computations reference skills through <code>executor.resource</code>; when they do, the skill's capability identifier and the computation's capability identifier <em class="rfc2119">SHOULD</em> be linked through <code>sourceArtifacts</code> so that signals on either inform the other.</p>
 </section>
 
+<section id="profile-https-api">
+<h3><bdi class="secno">12.10.</bdi> Typed HTTPS API Operations<a class="self-link" href="#profile-https-api" aria-label="Permalink for section 12.10">§</a></h3>
+<p>Profile identifier: <code>https-api/1</code>. This profile maps existing typed HTTPS request/response operations. It does not create an endpoint or grant and is distinct from <code>http/1.1</code>, which describes AGTP feedback delivery. Its namespace is <code>https://schema.agtp.org/profiles/https-api#</code>.</p>
+<ul>
+<li>A Capability Descriptor has <code>interfaceType: api-tool</code> and an <code>interface</code> containing <code>protocol: https</code>, the actual upstream API contract <code>version</code>, fixed HTTPS <code>url</code>, actual <code>method</code>, <code>schemaHash</code> and <code>schemaPayload</code>. <code>bindings</code> entries carry the same fields. An API contract identifier such as <code>gos.account.identity-trust.v1</code> is not an HTTP transport version or an AGTP feedback version. The actual owner codecs and endpoint remain authoritative.</li>
+<li>A mapped Observation Record uses <code>sourceProtocol: https</code> and <code>sourceVersion</code> equal to that upstream contract version. Its <code>sourceRefs</code> preserve the exact method, endpoint, original response/request correlation identifiers, status and upstream ordering. Request and response bodies become Artifacts under the selected privacy policy; the descriptor and exact schema payload become source/config artifacts. Neither the API endpoint nor an API key is a DID.</li>
+<li>The <code>actor</code> and capability owner DIDs come from established identity mappings. Where the API exposes only a local Account/key identifier, the observer uses its explicitly configured gateway DID and preserves the delegated actor only through authorized source evidence or an actual Delegation credential. A string Account identifier <em class="rfc2119">MUST NOT</em> be turned into a DID by convention. The observation subject is the capability URI unless the actual API supplies a specific assessed-subject URI; in that case the original subject URI is preserved and the invoked capability remains in <code>capabilityRefs</code>. Feedback about the provider remains a separate subject choice.</li>
+<li>When a response exposes an actual interaction URI, it is preserved unchanged, with its documented response pointer declared in <code>interface.correlation.responseUri</code>. Otherwise <code>interface.correlation.requestIdHeader</code> names an actual server-generated correlation header. The interaction is the <code>ni:///sha-256;</code> URI, with an unpadded base64url digest, of the JCS UTF-8 array <code>[interface.url, interface.method, exactHeaderValue]</code>. The same tuple and original header value are retained in <code>sourceRefs</code>. This derives an AGTP exchange identity, not a new server Run or payment receipt. A missing required correlation identifier makes invocation-provenance qualification unavailable; it <em class="rfc2119">MUST NOT</em> be invented. Provenance binds actual input/output artifacts and the descriptor used for that exchange.</li>
+<li>HTTP outcomes, errors, timeouts, latency, usage and quote/preflight advice are observations, not Learning Signals. A subsequent explicit human/evaluator judgment may issue a signal with the declared Space dimensions and that bound provenance. A domain Rating is not automatically a judgment about the API provider. No grant, hold, settlement or receipt is inferred from a successful read.</li>
+<li>Authentication material, private keys, cookies and credentials <em class="rfc2119">MUST NOT</em> be published in artifacts, comments or observation claims. Raw bodies and local principal references remain private, redacted or committed-only as policy requires; schemas contain no instance data. A replay verifier without body access reports that limitation. Failed, absent and unavailable fields <em class="rfc2119">MUST NOT</em> be replaced by zero or a successful result.</li>
+<li>The API's original request/response schemas and its reserved fields remain unchanged. AGTP context travels in the mapped Observation Record and in an existing API metadata location only when that upstream API actually defines one. Producers <em class="rfc2119">MUST NOT</em> inject AGTP parameters, a caller-selected authoritative Account or an invented metadata header into a strict API contract.</li>
+</ul>
+<p>The supported issuance points are declaration of the actual API interface, observation of a correlated exchange and an explicit subsequent judgment. Producers state which they implement. This profile uses the <a href="#profile-gos-schema-payload">shared schema-payload convention</a> without claiming a gOS Registry invocation. Existing MCP operations retain their normative MCP binding and actual tool/server/version locators.</p>
+</section>
+
+<section id="profile-gos-atom">
+<h3><bdi class="secno">12.11.</bdi> gOS Atom Declarations and Retained Execution<a class="self-link" href="#profile-gos-atom" aria-label="Permalink for section 12.11">§</a></h3>
+<p>Profile identifier: <code>gos-atom/1</code>. This newly published profile maps the existing gOS Registry invocation API and its retained Compute/Work/Run evidence. It does not define a new RPC, runtime, ledger or execution permission. Its terms are scoped by <code>https://schema.agtp.org/profiles/gos-atom#</code>. A source declaration, an admitted invocation and a verified observation are separate facts.</p>
+<div class="table-wrap"><table>
+<caption>gOS source and execution mappings</caption>
+<thead><tr><th>Upstream fact</th><th>AGTP representation</th><th>Required mapping</th></tr></thead>
+<tbody>
+<tr><td>Actual Registry-declared serializable operation</td><td>Capability Descriptor, <code>interfaceType: api-tool</code></td><td>The owner DID is the stable module/evaluator DID. The atom identifier, immutable semantic version, fixed entry and advertised input/output schemas come from the actual owner declaration. Source artifacts pin implementation, contract and schema leaves. A version-only <code>interface</code> is insufficient.</td></tr>
+<tr><td>Registry/Compute invocation</td><td><code>interface.protocol: gos-atom</code></td><td><code>version</code> is the exact declared atom version; <code>atom_id</code>, <code>entry</code> and <code>carrier</code> are the actual Registry locator. The host resolves that immutable declaration and applies its existing admission, current authority and resource limits. This locator does not assert an HTTP endpoint.</td></tr>
+<tr><td>Retained Work, producer Run and outcome</td><td>Artifacts and an Observation Record</td><td>Preserve original Work/Run/attempt/node identifiers, resource revisions, outcome references, source references and recorded digests. <code>sourceProtocol</code> is <code>gos-atom</code>; <code>sourceVersion</code> is the invoked atom's exact version. Preserve upstream array order. An unretained call cannot be presented as a retained Run.</td></tr>
+</tbody></table></div>
+<p>This initial invocation profile is Registry-only. A portable source module or proposed atom identifier without its actual Registry wrapper/carrier <em class="rfc2119">MUST NOT</em> claim <code>gos-atom/1</code>. Its DID/source identity and schema-payload metadata may be retained separately, with the missing invocation qualification explicit. The profile does not turn a source declaration into current availability.</p>
+<p>Each binding advertised under this profile <em class="rfc2119">MUST</em> carry its actual <code>protocol</code>, <code>version</code>, protocol-specific locator, <code>schemaHash</code> and <code>schemaPayload</code> as specified below. The top-level <code>interface</code> identifies the primary binding and carries the same fields. Multiple actual bindings <em class="rfc2119">MAY</em> describe the same capability. Private object-identity lifecycles, native callbacks and opaque signing contexts without a serializable invocation <em class="rfc2119">MUST NOT</em> be relabelled as an invocable <code>api-tool</code>, Agent Skill, OKF computation or policy to avoid these requirements. They <em class="rfc2119">MAY</em> retain a DID and source identity independently.</p>
+<p>Descriptor leaves <em class="rfc2119">MUST NOT</em> include a declaration or outer publication manifest that in turn pins that descriptor. The runtime's actual selected declaration digest is recorded after binding in observation <code>sourceRefs</code>; it need not be embedded in its own descriptor. This avoids a descriptor/declaration hash cycle.</p>
+<section id="profile-gos-schema-payload">
+<h4><bdi class="secno">12.11.1.</bdi> Exact Schema Payload Bytes<a class="self-link" href="#profile-gos-schema-payload" aria-label="Permalink for section 12.11.1">§</a></h4>
+<p>Encoding identifier: <code>jcs-schema-payload/1</code>; hashing identifier: <code>jcs-schema-payload-1+sha2-256</code>. The payload is exactly an object with required <code>inputSchema</code> and optional <code>outputSchema</code>, each a materialized JSON Schema object, and no other top-level members. A missing output schema remains missing. This version does not turn an unresolved schema URI into a materialized schema.</p>
+<p>Producers <em class="rfc2119">MUST</em> encode that object with the JSON Canonicalization Scheme, RFC 8785 <cite>[<a href="#bib-rfc8785">RFC8785</a>]</cite>, as UTF-8 with no BOM, trailing line feed or other added bytes. JSON strings and property names <em class="rfc2119">MUST</em> contain well-formed Unicode; Unicode normalization <em class="rfc2119">MUST NOT</em> be applied. Numbers have the finite IEEE-754 semantics required by JCS. Duplicate members, nonfinite numbers, executable conversions and non-JSON object graphs <em class="rfc2119">MUST</em> be rejected. This isolated schema-metadata encoding <em class="rfc2119">MUST NOT</em> change an upstream monetary, evidence, Run, outcome or signature encoding.</p>
+<p><code>schemaHash</code> is the multibase base64url encoding (prefix <code>u</code>, no padding) of the SHA2-256 multihash of those exact bytes. <code>schemaPayload</code> is an object with <code>encoding: jcs-schema-payload/1</code> and <code>uri</code> locating those immutable public bytes. A verifier <em class="rfc2119">MUST</em> check the raw bytes against both JCS and <code>schemaHash</code>, then check that the descriptor's advertised schema objects agree with the payload. It <em class="rfc2119">MUST NOT</em> re-encode a noncanonical response and then accept it as the original payload. A URI-valued advertised schema is qualified by this convention only when it resolves to the corresponding member of the exact pinned payload.</p>
+<p>The existing credential owner <em class="rfc2119">MAY</em> derive this public leaf from an immutable descriptor's already-public schema objects. It <em class="rfc2119">MUST</em> preserve retrieval for historical versions and <em class="rfc2119">MUST NOT</em> use a current/floating publication or descriptor hash inside the payload. Publishing these schema bytes does not authorize disclosure of private implementation code or user data. Schema hash equality does not prove all host semantic refinements, current admission or source authority.</p>
+<p>Existing HTTP and MCP descriptors <em class="rfc2119">MAY</em> adopt this explicit schema-payload convention while retaining their actual protocols and locators. Such adoption <em class="rfc2119">MUST</em> declare <code>schemaPayload.encoding</code>. This is a new versioned encoding convention; it does not reinterpret historical <code>schemaHash</code> values whose serialization was not declared.</p>
+</section>
+<section id="profile-gos-observations">
+<h4><bdi class="secno">12.11.2.</bdi> Identity, Provenance and Issuance<a class="self-link" href="#profile-gos-observations" aria-label="Permalink for section 12.11.2">§</a></h4>
+<ul>
+<li>The Registry's existing evaluator binding carries the module DID and immutable descriptor reference. AGTP fields <em class="rfc2119">MUST NOT</em> be injected into strict upstream argument bags or Run bodies. The mapped Observation Record carries the Space, capability content hash, interaction and provenance identifiers; its <code>sourceRefs</code> preserve their link to the existing Registry/Work evidence.</li>
+<li>The interaction identifier is the actual producer Run URI when a retained Run exists. Parent/root Work and invocation identifiers remain separate references. A local resource URI or Run identifier <em class="rfc2119">MUST NOT</em> be treated as an AGTP DID or as an AGTP provenance URI. Provenance uses the existing <a href="#provenance-uri">section 3.3</a> form and binds the actual retained input/output, declaration and outcome artifacts.</li>
+<li><code>actor</code> uses an upstream DID only when the existing identity owner establishes that mapping. Otherwise an explicitly configured gateway DID is used and the original upstream principal is retained only as authorized source evidence. The evaluator DID, native signing principal, atom/version, Run and feedback subject <em class="rfc2119">MUST</em> remain distinct. A missing native <code>signer_did</code> <em class="rfc2119">MUST NOT</em> be fabricated. The execution observation subject is the invoked capability URI; an output Review preserves its own Dataset subject and does not replace that execution subject.</li>
+<li>Original Run/outcome bytes, native date encoding, mutation revisions and attestations remain unchanged artifacts. A completion timestamp <em class="rfc2119">MAY</em> be mapped from the typed successful producer Run when actually present; it <em class="rfc2119">MUST NOT</em> be invented from an outcome digest, a root Run still in progress, or read time. Native Run schema1's default JSON date representation uses reference-epoch seconds from 2001, not Unix seconds; mapping uses the upstream typed date codec. A native P256 attestation is not an AGTP Data Integrity proof.</li>
+<li>Execution success, a process exit code, latency and a raw computation result are observations. A domain Review/Rating <em class="rfc2119">MAY</em> be retained as an output artifact, preserving its actual subject, units, policy and unavailable state. It is not automatically feedback about the evaluator. A Learning Signal requires a separate explicit evaluative judgment, declared Space dimensions and bound provenance. No Receipt or aggregate is synthesized from a successful local call.</li>
+<li>Raw, redacted and committed-only evidence follow the existing privacy classes. Public schemas contain no input values or private trace bodies. Native input/Run/outcome records <em class="rfc2119">MAY</em> remain under their existing disclosure authority, with their CIDs bound by provenance. A verifier without that authority <em class="rfc2119">MUST</em> report the resulting replay limitation rather than infer evidence access.</li>
+</ul>
+<p>This profile's supported issuance points are capability declaration, observation of an actual retained invocation, and an explicit subsequent evaluative judgment. A producer <em class="rfc2119">MUST</em> state which it supports. Registered identity, DID resolution, credential proof/status, interface qualification, current runtime admission and actual product availability <em class="rfc2119">MUST NOT</em> be collapsed into one verified flag. Agent Skills and OKF profiles remain applicable only to their actual upstream packages and concepts.</p>
+</section>
+</section>
+
 <section id="profile-erc8004">
-<h3><bdi class="secno">12.10.</bdi> ERC-8004 Trustless Agents<a class="self-link" href="#profile-erc8004" aria-label="Permalink for section 12.10">§</a></h3>
+<h3><bdi class="secno">12.12.</bdi> ERC-8004 Trustless Agents<a class="self-link" href="#profile-erc8004" aria-label="Permalink for section 12.12">§</a></h3>
 <p>Profile identifier: <code>erc8004/1</code>. ERC-8004 <cite>[<a href="#bib-erc-8004">ERC-8004</a>]</cite> defines three on-chain registries: an identity registry that mints an agent identifier bound to an off-chain registration file, a reputation registry that records feedback entries pointing at off-chain feedback files, and a validation registry that records validation requests and responses by hash. This profile lets AGTP use those registries for discovery and anchoring while keeping signals, manifests and traces off-chain, portable and chain-neutral.</p>
 <div class="table-wrap">
 <table>
@@ -3222,12 +3282,12 @@ components:
 <tr><td>Record types</td><td><code>ObservationRecord</code>, <code>MCPToolCallRecord</code>, <code>A2ATaskEventRecord</code>, <code>ModelRunRecord</code>, <code>UIEventRecord</code></td></tr>
 <tr><td>DID service types</td><td><code>AGTPFeedbackService</code>, <code>AGTPSpaceManifest</code>, <code>AGTPCapabilities</code>, <code>AGTPSignalIndex</code>, <code>AgenticResourceDiscovery</code>, <code>MCPServer</code>, <code>A2AAgentCard</code></td></tr>
 <tr><td>Credential status types</td><td><code>AGTPSpaceStatus</code></td></tr>
-<tr><td>Profile identifiers</td><td><code>did-vc/2.1</code>, <code>http/1.0</code>, <code>http/1.1</code>, <code>didcomm/2.0</code>, <code>mcp/2025-06-18</code>, <code>mcp/2025-11-25</code>, <code>ard/0.91</code>, <code>okf/0.2</code>, <code>openai-api/1</code>, <code>a2a/1.0</code>, <code>a2ui/0.8</code>, <code>a2ui/0.9</code>, <code>agents-skills/1</code>, <code>erc8004/1</code></td></tr>
+<tr><td>Profile identifiers</td><td><code>did-vc/2.1</code>, <code>http/1.0</code>, <code>http/1.1</code>, <code>didcomm/2.0</code>, <code>mcp/2025-06-18</code>, <code>mcp/2025-11-25</code>, <code>ard/0.91</code>, <code>okf/0.2</code>, <code>openai-api/1</code>, <code>a2a/1.0</code>, <code>a2ui/0.8</code>, <code>a2ui/0.9</code>, <code>agents-skills/1</code>, <code>gos-atom/1</code>, <code>https-api/1</code>, <code>erc8004/1</code></td></tr>
 <tr><td>Interface types</td><td><code>mcp-tool</code>, <code>mcp-resource</code>, <code>mcp-prompt</code>, <code>a2a-skill</code>, <code>api-tool</code>, <code>agent-skill</code>, <code>okf-computation</code>, <code>policy-only</code>; extensions prefixed <code>x-</code></td></tr>
 <tr><td>Privacy classes</td><td><code>ephemeral</code>, <code>persistent</code>, <code>redacted</code>, <code>committed-only</code></td></tr>
 <tr><td>Aggregation functions</td><td><code>https://schema.agtp.org/aggregation#TrustWeightedAverage</code></td></tr>
 <tr><td>Tree constructions</td><td><code>rfc6962</code></td></tr>
-<tr><td>Hashing identifiers</td><td><code>rdfc-1.0+sha2-256</code>; legacy alias <code>URDNA2015+multihash</code></td></tr>
+<tr><td>Hashing identifiers</td><td><code>rdfc-1.0+sha2-256</code>, <code>jcs-schema-payload-1+sha2-256</code>; legacy alias <code>URDNA2015+multihash</code></td></tr>
 <tr><td>Problem types</td><td><code>nonce-invalid</code>, <code>malformed</code>, <code>unauthenticated</code>, <code>not-admitted</code>, <code>dimension-not-accepted</code>, <code>duplicate-delivery</code>, <code>too-large</code>, <code>proof-invalid</code>, <code>issuer-unresolvable</code>, <code>status-revoked</code>, <code>value-out-of-range</code>, <code>provenance-invalid</code>, <code>space-mismatch</code>, <code>manifest-expired</code>, <code>schema-invalid</code>, <code>rate-limited</code>, <code>degraded</code>, under <code>https://schema.agtp.org/problems/</code></td></tr>
 <tr><td>Provenance parameters</td><td><code>space</code>, <code>interaction</code>, <code>artifact</code>; extensions with reverse-DNS prefixes</td></tr>
 <tr><td>Reserved keys in host protocols</td><td>As listed in <a href="#profile-contract">§12.1</a>; the MCP <code>_meta</code> prefix <code>org.agtp/</code>; the A2A extension URI <code>https://schema.agtp.org/a2a/ext/v1</code></td></tr>
@@ -3327,6 +3387,7 @@ components:
 <dt id="bib-rfc8259">[RFC8259]</dt><dd>T. Bray. <a href="https://www.rfc-editor.org/rfc/rfc8259">The JavaScript Object Notation (JSON) Data Interchange Format</a>. STD 90, RFC 8259, December 2017.</dd>
 <dt id="bib-rfc8555">[RFC8555]</dt><dd>R. Barnes, J. Hoffman-Andrews, D. McCarney, J. Kasten. <a href="https://www.rfc-editor.org/rfc/rfc8555">Automatic Certificate Management Environment (ACME)</a>. RFC 8555, March 2019.</dd>
 <dt id="bib-rfc8615">[RFC8615]</dt><dd>M. Nottingham. <a href="https://www.rfc-editor.org/rfc/rfc8615">Well-Known Uniform Resource Identifiers (URIs)</a>. RFC 8615, May 2019.</dd>
+<dt id="bib-rfc8785">[RFC8785]</dt><dd>Rundgren, Jordan and Erdtman. <a href="https://www.rfc-editor.org/rfc/rfc8785">JSON Canonicalization Scheme (JCS)</a>. RFC 8785, June 2020.</dd>
 <dt id="bib-rfc9110">[RFC9110]</dt><dd>R. Fielding, M. Nottingham, J. Reschke. <a href="https://www.rfc-editor.org/rfc/rfc9110">HTTP Semantics</a>. STD 97, RFC 9110, June 2022.</dd>
 <dt id="bib-rfc9111">[RFC9111]</dt><dd>R. Fielding, M. Nottingham, J. Reschke. <a href="https://www.rfc-editor.org/rfc/rfc9111">HTTP Caching</a>. STD 98, RFC 9111, June 2022.</dd>
 <dt id="bib-rfc9421">[RFC9421]</dt><dd>A. Backman, J. Richer, M. Sporny. <a href="https://www.rfc-editor.org/rfc/rfc9421">HTTP Message Signatures</a>. RFC 9421, February 2024.</dd>
