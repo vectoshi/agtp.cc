@@ -19,5 +19,5 @@ jobs:
       - run: python3 -m venv .test-venv
       - run: .test-venv/bin/pip install -r tests/requirements.txt
       - run: npm test
-      - run: python3 src/build.py --snapshot 2026/ED-agtp-2.1-20261117-editorial1
+      - run: python3 src/build.py --snapshot 2026/ED-agtp-2.1-20261118
       - run: git diff --exit-code

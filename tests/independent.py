@@ -2,7 +2,7 @@
 For the datasets used here RDFC-1.0 and URDNA2015 yield identical canonical bytes;
 Node's RDFC-1.0 processor is separately checked against official W3C vectors.
 """
-import sys,json,pathlib,hashlib
+import sys,json,pathlib,hashlib,base64
 from pyld import jsonld
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 root=pathlib.Path(__file__).resolve().parents[1]
@@ -16,6 +16,21 @@ def loader(url,options=None):
  return {'contextUrl':None,'documentUrl':url,'document':json.loads((root/contexts[url]).read_text())}
 request=json.load(sys.stdin)
 def canon(doc):return jsonld.normalize(doc,{'algorithm':'URDNA2015','format':'application/n-quads','documentLoader':loader})
+if request.get('mode') == 'schema-payload':
+ # Isolated RFC8785 schema metadata path. Existing credential/money/evidence
+ # parsing below remains unchanged. JCS numbers have IEEE754 semantics.
+ from c14n.Canonicalize import canonicalize as jcs
+ raw=base64.b64decode(request['base64'],validate=True)
+ if len(raw)>8*1024*1024:raise ValueError('Schema payload byte limit')
+ def no_constant(value):raise ValueError('Nonfinite JSON constant')
+ payload=json.loads(raw.decode('utf-8'),parse_int=float,parse_float=float,parse_constant=no_constant)
+ if type(payload) is not dict or 'inputSchema' not in payload or set(payload)-{'inputSchema','outputSchema'} or any(type(value) is not dict for value in payload.values()):raise ValueError('Exact materialized schema pair required')
+ encoded=jcs(payload)
+ if encoded!=raw:raise ValueError('Noncanonical schema payload bytes')
+ digest=hashlib.sha256(encoded).digest()
+ multihash='u'+base64.urlsafe_b64encode(bytes([0x12,0x20])+digest).decode().rstrip('=')
+ print(json.dumps({'canonical':encoded.decode('utf-8'),'multihash':multihash},ensure_ascii=False))
+ sys.exit(0)
 doc=request['document']; canonical=canon(doc)
 if 'proof' in request:
  proof=dict(request['proof']); proof['@context']=doc['@context']; proof.pop('proofValue',None)
